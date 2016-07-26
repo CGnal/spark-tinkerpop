@@ -1,0 +1,24 @@
+package org.apache.spark.graphx.io
+
+import scala.reflect.ClassTag
+
+import org.apache.spark.graphx.serialization.kryo.KryoRegistry
+import org.apache.spark.graphx.{ EdgeTriplet, Graph }
+import org.apache.spark.rdd.RDD
+
+class KryoGraphWriter[A, B](graph: Graph[A, B], location: String, registry: KryoRegistry)(implicit A: ClassTag[A], B: ClassTag[B]) extends GraphWriter[A, B](graph) {
+
+  protected def saveVerticesRDD(rdd: => RDD[Vertex[A]]) = KryoGraphIO.writeGrouped[Vertex[A]](registry, s"$location/$vertexLocation") { rdd }
+
+  protected def saveEdgesRDD(rdd: => RDD[PartitionEdge[B, A]]) = KryoGraphIO.writeGrouped[PartitionEdge[B, A]](registry, s"$location/$edgeLocation") { rdd }
+
+  protected def saveTripletsRDD(rdd: => RDD[EdgeTriplet[A, B]]) = KryoGraphIO.writeGrouped[EdgeTriplet[A, B]](registry, s"$location/$tripletLocation") { rdd }
+
+}
+
+object KryoGraphWriter {
+
+  def apply[A, B](graph: Graph[A, B], location: String, registry: KryoRegistry)(implicit A: ClassTag[A], B: ClassTag[B]) =
+    new KryoGraphWriter[A, B](graph, location, registry)
+
+}
