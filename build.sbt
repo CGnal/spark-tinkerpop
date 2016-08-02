@@ -6,7 +6,7 @@ val applicationVersion = "1.0-SNAPSHOT"
 
 organization := "org.cgnal"
 
-name := "graphE"
+name := "spark-tinkerpop"
 
 version := applicationVersion
 

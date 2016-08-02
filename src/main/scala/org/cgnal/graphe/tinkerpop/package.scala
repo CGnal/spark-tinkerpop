@@ -1,6 +1,5 @@
 package org.cgnal.graphe
 
-
 import scala.reflect.ClassTag
 import scala.collection.convert.decorateAsScala._
 
@@ -50,7 +49,7 @@ package object tinkerpop {
     }
 
     def mergeWith(tinkerConfig: TinkerConfig) = tinkerConfig.getKeys.asScala.foldLeft(copy) { (hadoop, next) =>
-      hadoop.set(next.toString, tinkerConfig.getString(next.toString))
+      hadoop.set(next, tinkerConfig.getProperty(next).toString)
       hadoop
     }
 
@@ -60,7 +59,7 @@ package object tinkerpop {
 
     def asTinkerpop(implicit A: ClassTag[A], B: ClassTag[B]) = SparkBridge.asTinkerpop(graph)
 
-    def saveNativeGraph(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: TinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative
+    def saveNativeGraph(useTinkerpop: Boolean = true)(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: TinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative(useTinkerpop)
 
   }
 
@@ -102,9 +101,9 @@ package object tinkerpop {
 
     def saveAsGraphSON(path: String)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = asVertexWritable(EmptyTinkerGraphProvider, arrowV, arrowE).saveAsNewAPIHadoopFile[GraphSONOutputFormat](path)
 
-    def saveNative(implicit graphProvider: TinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = rdd.foreachPartition {
+    def saveNative(useTinkerpop: Boolean = true)(implicit graphProvider: TinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = rdd.foreachPartition {
       graphProvider.withGraphTransaction(_) { (graph, vertex) =>
-        vertex.outEdges.foldLeft(graph.addVertex(vertex.asVertexKeyValue: _*)) { (v, e) =>
+        vertex.outEdges.foldLeft(graph.addVertex(vertex.asVertexKeyValue(useTinkerpop): _*)) { (v, e) =>
           val edge = e.asTinkerEdge(graph)(Arrows.tinkerVertexPropSetArrowF(arrowV), arrowE)
           v.addEdge(edge.edgeLabel, edge.inVertex(), Arrows.tinkerKeyValuePropSetArrowF(arrowE).apF(e.attr): _*)
           v

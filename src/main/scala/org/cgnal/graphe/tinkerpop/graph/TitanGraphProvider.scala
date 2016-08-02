@@ -14,8 +14,8 @@ object TitanGraphProvider extends TinkerGraphProvider with ResourceConfig with S
   def withGraphManagement[U](f: TitanManagement => U) = {
     val management = graph.openManagement()
     Try { f(management) } match {
-      case Success(u) => management.commit(); u
-      case Failure(e) => management.rollback(); throw e
+      case Success(u) => management.commit(); graph.tx.close(); u
+      case Failure(e) => management.rollback(); graph.tx.close(); throw e
     }
   }
 

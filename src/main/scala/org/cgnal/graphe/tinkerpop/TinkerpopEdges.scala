@@ -6,19 +6,27 @@ import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Vertex => 
 
 case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEdge[A, B]], outEdges: List[SparkEdge[A, B]]) {
 
-  def vertexLabel = vertex.getClass.getSimpleName
+  def vertexIdKey(useTinkerPop: Boolean = true): AnyRef = if (useTinkerPop) T.id else "vertexId"
 
-  def asTinkerVertex(parentGraph: TinkerGraph)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]): TinkerVertex = TinkerSparkVertex(
+  def vertexIdValue = vertexId.toString
+
+  def vertexLabelKey(useTinkerPop: Boolean = true): AnyRef = if (useTinkerPop) T.label else "vertexLabel"
+
+  def vertexLabelValue = vertex.getClass.getSimpleName
+
+  def asTinkerVertex(parentGraph: TinkerGraph, useTinkerpop: Boolean = true)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]): TinkerVertex = TinkerSparkVertex(
     vertexId      = vertexId,
-    vertexLabel   = vertexLabel,
+    vertexLabel   = vertexLabelValue,
     parentGraph   = parentGraph,
     inEdges       = inEdges.map  { _.asTinkerEdge(parentGraph) },
     outEdges      = outEdges.map { _.asTinkerEdge(parentGraph) },
     propertiesMap = arrowV.apF(vertex)
   )
 
-  def asVertexKeyValue(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A]): Seq[AnyRef] =
-    T.id +: vertexId.toString +: T.label +: vertexLabel +: Arrows.tinkerKeyValuePropSetArrowF(arrowV).apF { vertex }
+  def asVertexKeyValue(useTinkerpop: Boolean = true)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A]): Seq[AnyRef] =
+    vertexIdKey(useTinkerpop)    +: vertexIdValue    +:
+    vertexLabelKey(useTinkerpop) +: vertexLabelValue +:
+    Arrows.tinkerKeyValuePropSetArrowF(arrowV).apF { vertex }
 
 }
 

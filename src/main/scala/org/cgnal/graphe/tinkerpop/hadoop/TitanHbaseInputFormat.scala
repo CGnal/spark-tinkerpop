@@ -1,5 +1,7 @@
 package org.cgnal.graphe.tinkerpop.hadoop
 
+import scala.collection.convert.decorateAsScala._
+
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
@@ -21,11 +23,11 @@ class TitanHbaseInputFormat extends InputFormat[NullWritable, VertexWritable] wi
 
   def getConf = config
   def setConf(conf: Configuration) = {
+    config = conf
     conf.set       (hbaseMapredInputTableKey   , titanHbaseTable)
     conf.setStrings(hbaseZookeeperQuorumKey    , titanZookeeperQuorum: _*)
     conf.setInt    (hbaseZookeeperClientPortKey, titanZookeeperClientPort)
     conf.set       (hbaseMapredScanKey         , titanHbaseScanString)
-    config = conf
     tableInputFormat.setConf(conf)
   }
 
@@ -42,16 +44,15 @@ class TitanHbaseInputFormat extends InputFormat[NullWritable, VertexWritable] wi
 
   def getSplits(context: JobContext) = tableInputFormat.getSplits(context)
 
-  def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = new HBaseBinaryRecordReader(
-    tableInputFormat.createRecordReader(inputSplit, taskContext),
-    Bytes.toBytes(titanEdgeStorageFamily)
-  )
+  def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = {
+    setConf(taskContext.getConfiguration)
+    new HBaseBinaryRecordReader(
+      tableInputFormat.createRecordReader(inputSplit, taskContext),
+      Bytes.toBytes(titanEdgeStorageFamily))
+  }
 
   def createRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = new TitanHbaseRecordReader(
     createHbaseRecordReader(inputSplit, taskContext),
-    getConf
-  )
-
-
+    getConf)
 
 }

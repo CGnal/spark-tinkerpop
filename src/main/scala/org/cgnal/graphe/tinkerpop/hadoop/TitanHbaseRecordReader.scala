@@ -1,5 +1,7 @@
 package org.cgnal.graphe.tinkerpop.hadoop
 
+import scala.collection.convert.decorateAsScala._
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, RecordReader }
@@ -15,7 +17,12 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
 
   private var vertexWritable: VertexWritable = new VertexWritable()
 
-  private lazy val titanHadoopSetup: TitanHadoopSetup = new TitanHadoopSetupImpl(config)
+  private lazy val titanHadoopSetup: TitanHadoopSetup = {
+    config.iterator().asScala.foreach { entry =>
+      println { s"{${entry.getKey} : [${entry.getValue}]}" }
+    }
+    new TitanHadoopSetupImpl(config)
+  }
   private lazy val vertexReader = new TitanVertexDeserializer(titanHadoopSetup)
 
   private def setCurrentValue(vertex: TinkerVertex) = {
