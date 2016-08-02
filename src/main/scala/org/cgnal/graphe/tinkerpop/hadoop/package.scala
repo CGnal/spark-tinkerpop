@@ -2,6 +2,7 @@ package org.cgnal.graphe.tinkerpop
 
 import com.thinkaurelius.titan.diskstorage.configuration.ConfigElement
 import com.thinkaurelius.titan.diskstorage.hbase.HBaseStoreManager
+import com.thinkaurelius.titan.diskstorage.StandardStoreManager
 import com.thinkaurelius.titan.hadoop.config.TitanHadoopConfiguration
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration
 
@@ -16,6 +17,11 @@ package object hadoop {
   // value = true
   val titanShortenNameKey   = ConfigElement.getPath(HBaseStoreManager.SHORT_CF_NAMES)
   val titanShortenNameValue = HBaseStoreManager.SHORT_CF_NAMES.getDefaultValue
+
+  // key   = storage.backend
+  // value = hbase
+  val titanBackendNameKey   = ConfigElement.getPath(GraphDatabaseConfiguration.STORAGE_BACKEND)
+  val titanBackendNameValue = StandardStoreManager.HBASE.getShorthands.get(0)
 
   // key   = storage.hbase.table
   // value = titan

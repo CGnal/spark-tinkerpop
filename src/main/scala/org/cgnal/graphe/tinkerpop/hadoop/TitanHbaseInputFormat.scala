@@ -42,17 +42,19 @@ class TitanHbaseInputFormat extends InputFormat[NullWritable, VertexWritable] wi
   private def titanHbaseScan(scanner: Scan = new Scan) = scanner.addFamily { Bytes.toBytes(titanEdgeStorageFamily) }
   private def titanHbaseScanString = Base64.encodeBytes { ProtobufUtil.toScan(titanHbaseScan()).toByteArray }
 
-  def getSplits(context: JobContext) = tableInputFormat.getSplits(context)
-
-  def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = {
-    setConf(taskContext.getConfiguration)
-    new HBaseBinaryRecordReader(
-      tableInputFormat.createRecordReader(inputSplit, taskContext),
-      Bytes.toBytes(titanEdgeStorageFamily))
+  private def withUpdatedConf[A](newConf: Configuration)(f: Configuration => A) = {
+    setConf(newConf)
+    f { getConf }
   }
 
-  def createRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = new TitanHbaseRecordReader(
-    createHbaseRecordReader(inputSplit, taskContext),
-    getConf)
+  private def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = new HBaseBinaryRecordReader(
+    tableInputFormat.createRecordReader(inputSplit, taskContext),
+    Bytes.toBytes(titanEdgeStorageFamily))
+
+  def getSplits(context: JobContext) = tableInputFormat.getSplits(context)
+
+  def createRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = withUpdatedConf(taskContext.getConfiguration) {
+    new TitanHbaseRecordReader(createHbaseRecordReader(inputSplit, taskContext), _)
+  }
 
 }

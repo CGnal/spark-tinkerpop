@@ -17,12 +17,7 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
 
   private var vertexWritable: VertexWritable = new VertexWritable()
 
-  private lazy val titanHadoopSetup: TitanHadoopSetup = {
-    config.iterator().asScala.foreach { entry =>
-      println { s"{${entry.getKey} : [${entry.getValue}]}" }
-    }
-    new TitanHadoopSetupImpl(config)
-  }
+  private lazy val titanHadoopSetup: TitanHadoopSetup = new TitanHadoopSetupImpl(config)
   private lazy val vertexReader = new TitanVertexDeserializer(titanHadoopSetup)
 
   private def setCurrentValue(vertex: TinkerVertex) = {
