@@ -19,7 +19,7 @@ import org.apache.tinkerpop.gremlin.hadoop.structure.io.graphson.{ GraphSONInput
 import org.apache.tinkerpop.gremlin.hadoop.structure.io.gryo.{ GryoInputFormat, GryoOutputFormat }
 import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Edge => TinkerEdge, Vertex => TinkerVertex }
 
-import org.cgnal.graphe.tinkerpop.graph.{ EmptyTinkerGraphProvider, TinkerGraphProvider }
+import org.cgnal.graphe.tinkerpop.graph.{ NativeTinkerGraphProvider, EmptyTinkerGraphProvider, TinkerGraphProvider }
 
 package object tinkerpop {
 
@@ -59,7 +59,7 @@ package object tinkerpop {
 
     def asTinkerpop(implicit A: ClassTag[A], B: ClassTag[B]) = SparkBridge.asTinkerpop(graph)
 
-    def saveNativeGraph(useTinkerpop: Boolean = true)(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: TinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative(useTinkerpop)
+    def saveNativeGraph(useTinkerpop: Boolean = true)(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative(useTinkerpop)
 
   }
 
@@ -101,16 +101,7 @@ package object tinkerpop {
 
     def saveAsGraphSON(path: String)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = asVertexWritable(EmptyTinkerGraphProvider, arrowV, arrowE).saveAsNewAPIHadoopFile[GraphSONOutputFormat](path)
 
-    def saveNative(useTinkerpop: Boolean = true)(implicit graphProvider: TinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = rdd.foreachPartition {
-      graphProvider.withGraphTransaction(_) { (graph, vertex) =>
-        vertex.outEdges.foldLeft(graph.addVertex(vertex.asVertexKeyValue(useTinkerpop): _*)) { (v, e) =>
-          val edge = e.asTinkerEdge(graph)(Arrows.tinkerVertexPropSetArrowF(arrowV), arrowE)
-          v.addEdge(edge.edgeLabel, edge.inVertex(), Arrows.tinkerKeyValuePropSetArrowF(arrowE).apF(e.attr): _*)
-          v
-        }
-      }
-    }
-
+    def saveNative(useTinkerpop: Boolean = false)(implicit graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = graphProvider.saveNative(rdd)
   }
 
   implicit class EnrichedTinkerSparkContext(sparkContext: SparkContext) {
