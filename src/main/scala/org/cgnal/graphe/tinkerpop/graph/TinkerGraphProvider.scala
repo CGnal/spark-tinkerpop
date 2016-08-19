@@ -12,7 +12,7 @@ import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Transactio
 
 trait TinkerGraphProvider { this: Serializable =>
 
-  @transient protected lazy val log = LoggerFactory.getLogger(s"graph.provider.${this.getClass.getSimpleName}")
+  @transient protected lazy val log = LoggerFactory.getLogger(s"graph.provider.${this.getClass.getSimpleName.filter { _.isLetterOrDigit }}")
 
   protected def retryThreshold = 5
 
@@ -30,10 +30,10 @@ trait TinkerGraphProvider { this: Serializable =>
   }
 
   @tailrec
-  final protected def tryCommit(transaction: TinkerTransaction, attempt: Int = 0): Unit = Try { transaction.commit() } match {
-    case Success(_)                              => transaction.close()
-    case Failure(e) if attempt >= retryThreshold => transaction.rollback(); transaction.close(); throw new RuntimeException(s"Unable to commit transaction after [$attempt] attemp(s) -- rolling back", e)
-    case Failure(_)                              => sleepWarning { s"Failed to commit transaction after attempt [$attempt] -- backing off for [${retryDelay.toSeconds}] second(s)" }; tryCommit(transaction, attempt + 1)
+  final protected def tryCommit(transaction: TinkerTransaction, attempt: Int = 1): Unit = Try { transaction.commit() } match {
+    case Success(_)                             => log.info(s"Committed transaction at attempt [$attempt] - closing"); transaction.close()
+    case Failure(e) if attempt > retryThreshold => transaction.rollback(); transaction.close(); throw new RuntimeException(s"Unable to commit transaction after [$attempt] attemp(s) -- rolling back", e)
+    case Failure(_)                             => sleepWarning { s"Failed to commit transaction after attempt [$attempt] -- backing off for [${retryDelay.toSeconds}] second(s)" }; tryCommit(transaction, attempt + 1)
   }
 
   def tinkerConfig = config

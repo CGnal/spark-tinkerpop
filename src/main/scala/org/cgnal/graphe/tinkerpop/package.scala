@@ -1,11 +1,7 @@
 package org.cgnal.graphe
 
 import scala.reflect.ClassTag
-import scala.collection.convert.decorateAsScala._
 
-import org.apache.commons.configuration.{ Configuration => TinkerConfig }
-
-import org.apache.hadoop.conf.{ Configuration => HadoopConfig }
 import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.mapreduce.InputFormat
 
@@ -20,6 +16,7 @@ import org.apache.tinkerpop.gremlin.hadoop.structure.io.gryo.{ GryoInputFormat, 
 import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Edge => TinkerEdge, Vertex => TinkerVertex }
 
 import org.cgnal.graphe.tinkerpop.graph.{ NativeTinkerGraphProvider, EmptyTinkerGraphProvider, TinkerGraphProvider }
+import org.cgnal.graphe.tinkerpop.hadoop.EnrichedHadoopConfig
 
 package object tinkerpop {
 
@@ -40,20 +37,6 @@ package object tinkerpop {
   def propertyMissing(key: String) = throw new NoSuchElementException(s"No value for property [$key]")
 
   def computationNotSupported      = throw new UnsupportedOperationException("Graph computation not supported")
-
-  implicit class EnrichedHadoopConfig(hadoopConfig: HadoopConfig) {
-
-    def copy = hadoopConfig.asScala.foldLeft(new HadoopConfig) { (accConf, entry) =>
-      accConf.set(entry.getKey, entry.getValue)
-      accConf
-    }
-
-    def mergeWith(tinkerConfig: TinkerConfig) = tinkerConfig.getKeys.asScala.foldLeft(copy) { (hadoop, next) =>
-      hadoop.set(next, tinkerConfig.getProperty(next).toString)
-      hadoop
-    }
-
-  }
 
   implicit class EnrichedSparkTinkerGraph[A, B](graph: SparkGraph[A, B]) {
 

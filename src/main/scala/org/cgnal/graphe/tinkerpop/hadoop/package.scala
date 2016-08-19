@@ -1,5 +1,11 @@
 package org.cgnal.graphe.tinkerpop
 
+import scala.collection.convert.decorateAsScala._
+
+import org.apache.commons.configuration.{ Configuration => TinkerConfig }
+
+import org.apache.hadoop.conf.{ Configuration => HadoopConfig }
+
 import com.thinkaurelius.titan.diskstorage.configuration.ConfigElement
 import com.thinkaurelius.titan.diskstorage.hbase.HBaseStoreManager
 import com.thinkaurelius.titan.diskstorage.StandardStoreManager
@@ -42,5 +48,20 @@ package object hadoop {
   val hbaseMapredScanKey          = "hbase.mapreduce.scan"
   val hbaseZookeeperQuorumKey     = "hbase.zookeeper.quorum"
   val hbaseZookeeperClientPortKey = "hbase.zookeeper.property.clientPort"
+
+
+  implicit class EnrichedHadoopConfig(hadoopConfig: HadoopConfig) {
+
+    def copy = hadoopConfig.asScala.foldLeft(new HadoopConfig) { (accConf, entry) =>
+      accConf.set(entry.getKey, entry.getValue)
+      accConf
+    }
+
+    def mergeWith(tinkerConfig: TinkerConfig) = tinkerConfig.getKeys.asScala.foldLeft(copy) { (hadoop, next) =>
+      hadoop.set(next, tinkerConfig.getProperty(next).toString)
+      hadoop
+    }
+
+  }
 
 }

@@ -6,6 +6,8 @@ import org.cgnal.graphe.tinkerpop.{Arrows, TinkerpopEdges}
 
 trait NativeTinkerGraphProvider extends TinkerGraphProvider { this: Serializable =>
 
+  final protected type EdgeKey[A] = ((Long, Long), A)
+
   def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B])
 
 }
