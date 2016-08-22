@@ -1,7 +1,15 @@
 package org.cgnal.graphe.tinkerpop.graph.titan
 
+import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration
+import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
+import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
+import com.thinkaurelius.titan.graphdb.vertices.StandardVertex
+import com.thinkaurelius.titan.util.stats.NumberUtil
+
+import scala.annotation.tailrec
+
 import com.thinkaurelius.titan.graphdb.internal.ElementLifeCycle
-import com.thinkaurelius.titan.graphdb.transaction.StandardTitanTx
+import com.thinkaurelius.titan.graphdb.transaction.{ StandardTitanTx => TitanTransaction }
 import com.thinkaurelius.titan.graphdb.types.vertices.EdgeLabelVertex
 import org.apache.spark.graphx.EdgeTriplet
 import org.apache.spark.rdd.RDD
@@ -28,49 +36,57 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with ResourceConfig 
     }
   }
 
-  private def findIn[A, B](rdd: RDD[TinkerpopEdges[A, B]]) = Try {
-    rdd.flatMap { _.inEdges }
+  @tailrec
+  final protected def tryTitanCommit(transaction: TitanTransaction, attempt: Int = 1): Unit = Try { transaction.commit() } match {
+    case Success(_)                             => log.info(s"Committed transaction at attempt [$attempt] - closing"); transaction.close()
+    case Failure(e) if attempt > retryThreshold => transaction.rollback(); transaction.close(); throw new RuntimeException(s"Unable to commit transaction after [$attempt] attemp(s) -- rolling back", e)
+    case Failure(_)                             => sleepWarning { s"Failed to commit transaction after attempt [$attempt] -- backing off for [${retryDelay.toSeconds}] second(s)" }; tryTitanCommit(transaction, attempt + 1)
   }
 
-  private def findOut[A, B](rdd: RDD[TinkerpopEdges[A, B]]) = Try {
-    rdd.flatMap { _.outEdges }
-  }
-
-  private def joinIn[A, B](idRDD: RDD[TitanId], edges: RDD[EdgeTriplet[A, B]]) = Try {
-    { idRDD.keyBy(_.sparkId) join edges.keyBy(_.dstId) }.map {
-      case (_, triplet @ (titanId, outTriplet)) => (outTriplet.srcId, outTriplet.dstId) -> triplet
-    }
-  }
-
-  /*            /-> V -> E -> V
-   *       /-> E     /-> E /
-   *      V -> E -> V -> E -> V
-   *       \-> E
-   *            \-> V -> E -> V
-   */
-  private def joinOut[A, B](idRDD: RDD[TitanId], edges: RDD[EdgeTriplet[A, B]]) = Try {
-    { idRDD.keyBy(_.sparkId) join edges.keyBy(_.srcId) }.map {
-      case (_, triplet @ (titanId, outTriplet)) => (outTriplet.srcId, outTriplet.dstId) -> triplet
-    }
-  }
-
-  private def joinAll[A, B](inRDD: RDD[EdgeKey[(TitanId, EdgeTriplet[A, B])]], outRDD: RDD[EdgeKey[(TitanId, EdgeTriplet[A, B])]]) = Try {
-    { inRDD join outRDD }.map {
-      case (_, ((sourceId, _), (destinationId, triplet))) => (sourceId.titanId, destinationId.titanId) -> triplet.attr
-    }
-  }
-
-  private def saveEdges[A](rdd: RDD[EdgeKey[A]])(implicit arrow: Arrows.TinkerRawPropSetArrowF[A]) = Try {
+  private def saveEdges[A, B](rdd: RDD[TinkerpopEdges[A, B]])(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = Try {
     rdd.foreachPartition { partition =>
-      val transaction = graph.newTransaction().asInstanceOf[StandardTitanTx]
-      partition.foreach { case ((inId, outId), attr) =>
-        new EdgeLabelVertex(transaction, inId, ElementLifeCycle.Loaded).addEdge(
-          attr.getClass.getSimpleName,
-          new EdgeLabelVertex(transaction, outId, ElementLifeCycle.Loaded),
-          Arrows.tinkerKeyValuePropSetArrowF(arrow).apF(attr): _*
-        )
+      val transaction   = graph.newTransaction().asInstanceOf[TitanTransaction]
+      val partitionBits = NumberUtil.getPowerOf2(2)
+      val idManager     = transaction.getIdInspector
+
+      partition.foreach { tinkerpopEdge =>
+        tinkerpopEdge.outEdges.foreach { triplet =>
+          val inPartition = if (triplet.srcAttr.hashCode() > 0) 1l else 2l
+          val inId        = math.abs { triplet.srcAttr.hashCode() }
+
+          val outPartition = if (triplet.dstAttr.hashCode() > 0) 1l else 2l
+          val outId        = math.abs { triplet.dstAttr.hashCode() }
+
+          val inV  = new StandardVertex(transaction, idManager.getVertexID(inId,  inPartition,  IDManager.VertexIDType.NormalVertex), ElementLifeCycle.New)
+          val outV = new StandardVertex(transaction, idManager.getVertexID(outId, outPartition, IDManager.VertexIDType.NormalVertex), ElementLifeCycle.New)
+
+          inV.addEdge(
+            triplet.attr.getClass.getSimpleName,
+            outV,
+            Arrows.tinkerKeyValuePropSetArrowF(arrowE).apF(triplet.attr): _*
+          )
+
+          arrowV.apF(triplet.srcAttr).foldLeft(inV) { (tinkerVertex, prop) =>
+            tinkerVertex.property(prop._1, prop._2, Seq.empty[AnyRef]: _*)
+            tinkerVertex
+          }
+
+        }
+
+        if (tinkerpopEdge.outEdges.isEmpty) {
+          val vertexPartition = if (tinkerpopEdge.vertex.hashCode() > 0) 1l else 2l
+          val vertexId        = math.abs { tinkerpopEdge.vertex.hashCode() }
+
+          val v = transaction.addVertex(
+            idManager.getVertexID(vertexId, vertexPartition, IDManager.VertexIDType.NormalVertex),
+            new BaseVertexLabel(tinkerpopEdge.vertexLabelValue))
+          arrowV.apF(tinkerpopEdge.vertex).foldLeft(v) { (tinkerVertex, prop) =>
+            tinkerVertex.property(prop._1, prop._2, Seq.empty[AnyRef]: _*)
+            tinkerVertex
+          }
+        }
       }
-      transaction.commit()
+      tryTitanCommit(transaction)
     }
   }
 
@@ -80,23 +96,7 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with ResourceConfig 
     }
   }
 
-  private def createVertices[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = Try {
-    rdd.mapPartitions { partition =>
-      withGraphTransaction { graph: TinkerGraph =>
-        partition.map { vertex => TitanId(vertex.vertexId, graph.addVertex(vertex.asVertexKeyValue(useTinkerpop): _*)) }
-      }.get // let exception bubble up
-    }
-  }
-
-  private def saveAll[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = for {
-    vertices <- createVertices(rdd, useTinkerpop)
-    ins      <- findIn  { rdd }
-    inJoin   <- joinIn(vertices, ins)
-    outs     <- findOut { rdd }
-    outJoin  <- joinOut(vertices, outs)
-    allJoin  <- joinAll(inJoin, outJoin)
-    _        <- saveEdges(allJoin)
-  } yield ()
+  private def saveAll[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveRawEdges(rdd)
 
   def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveAll(rdd, useTinkerpop).get // let exceptions bubble up
 

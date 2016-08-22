@@ -24,7 +24,7 @@ trait TinkerGraphProvider { this: Serializable =>
 
   protected def graph: TinkerGraph
 
-  private def sleepWarning(m: String) = {
+  final protected def sleepWarning(m: String) = {
     log.warn(m)
     Thread.sleep(retryDelay.toMillis)
   }
