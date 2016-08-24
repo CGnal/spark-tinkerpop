@@ -8,4 +8,5 @@ object EmptyTinkerGraphProvider extends TinkerGraphProvider with Serializable {
 
   protected val graph = new EmptyTinkerGraph(config)
 
+  protected def createTransaction: TransactionWrapper = TinkerTransactionWrapper.create(graph)
 }
