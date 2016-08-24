@@ -1,12 +1,12 @@
 package org.cgnal.graphe.tinkerpop.graph
 
-import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
 import org.apache.spark.graphx.EdgeTriplet
 import org.apache.spark.rdd.RDD
 
 import com.thinkaurelius.titan.graphdb.internal.ElementLifeCycle
 import com.thinkaurelius.titan.graphdb.vertices.StandardVertex
 import com.thinkaurelius.titan.graphdb.transaction.{ StandardTitanTx => StandardTitanTransaction }
+import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
 
 import org.cgnal.graphe.tinkerpop.{Arrows, TinkerpopEdges}
 

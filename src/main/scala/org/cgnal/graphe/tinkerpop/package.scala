@@ -16,7 +16,6 @@ import org.apache.tinkerpop.gremlin.hadoop.structure.io.gryo.{ GryoInputFormat, 
 import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Edge => TinkerEdge, Vertex => TinkerVertex }
 
 import org.cgnal.graphe.tinkerpop.graph.{ NativeTinkerGraphProvider, EmptyTinkerGraphProvider, TinkerGraphProvider }
-import org.cgnal.graphe.tinkerpop.hadoop.EnrichedHadoopConfig
 
 package object tinkerpop {
 
@@ -93,12 +92,7 @@ package object tinkerpop {
 
     def loadGryo(path: String): RDD[TinkerVertex] = sparkContext.newAPIHadoopFile[NullWritable, VertexWritable, GryoInputFormat](path).map { _._2.get() }
 
-    def loadNative[A <: NativeGraphInputFormat](implicit A: ClassTag[A], provider: TinkerGraphProvider): RDD[TinkerVertex] = sparkContext.newAPIHadoopRDD[NullWritable, VertexWritable, A](
-      sparkContext.hadoopConfiguration.mergeWith { provider.tinkerConfig },
-      A.runtimeClass.asInstanceOf[Class[A]],
-      classOf[NullWritable],
-      classOf[VertexWritable]
-    ).map { _._2.get() }
+    def loadNative[A, B](implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) = SparkBridge.asGraphX[A, B] { provider.loadNative(sparkContext) }
 
   }
 

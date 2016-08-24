@@ -1,15 +1,13 @@
 package org.cgnal.graphe.tinkerpop.hadoop
 
-import scala.collection.convert.decorateAsScala._
-
+import org.apache.hadoop.conf.{ Configuration, Configurable }
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{ Base64, Bytes }
-
-import org.apache.hadoop.conf.{ Configuration, Configurable }
 import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, JobContext, InputFormat }
+
 import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
 
 import com.thinkaurelius.titan.diskstorage.hbase.HBaseStoreManager

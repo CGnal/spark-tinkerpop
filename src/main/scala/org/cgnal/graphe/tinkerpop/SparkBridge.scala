@@ -1,12 +1,7 @@
 package org.cgnal.graphe.tinkerpop
 
-import org.apache.spark.SparkContext
-import org.cgnal.graphe.tinkerpop.graph.TinkerGraphProvider
-
 import scala.reflect.ClassTag
 import scala.collection.convert.decorateAsScala._
-
-import org.apache.hadoop.conf.{ Configuration => HadoopConfig }
 
 import org.apache.spark.graphx.{ Graph => SparkGraph }
 import org.apache.spark.rdd.RDD

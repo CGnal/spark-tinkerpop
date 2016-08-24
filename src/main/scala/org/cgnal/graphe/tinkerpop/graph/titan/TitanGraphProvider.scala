@@ -2,21 +2,23 @@ package org.cgnal.graphe.tinkerpop.graph.titan
 
 import scala.util.{ Try, Success, Failure }
 
-import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
-import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
-
 import org.apache.spark.rdd.RDD
 
 import com.thinkaurelius.titan.core.TitanFactory
 import com.thinkaurelius.titan.core.schema.TitanManagement
+import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
+import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
 
-import org.cgnal.graphe.tinkerpop.{Arrows, TinkerpopEdges}
+import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges }
 import org.cgnal.graphe.tinkerpop.config.ResourceConfig
-import org.cgnal.graphe.tinkerpop.graph.{TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider}
+import org.cgnal.graphe.tinkerpop.hadoop.TitanHbaseInputFormat
+import org.cgnal.graphe.tinkerpop.graph.{ TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider }
 
 object TitanGraphProvider extends NativeTinkerGraphProvider with ResourceConfig with Serializable {
 
   @transient protected val graph = TitanFactory.open(config)
+
+  protected def nativeInputFormat = classOf[TitanHbaseInputFormat]
 
   protected def createTransaction: TransactionWrapper = TinkerTransactionWrapper.create(graph)
 

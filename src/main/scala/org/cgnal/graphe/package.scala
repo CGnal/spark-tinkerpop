@@ -9,8 +9,6 @@ import org.apache.hadoop.fs.{ Path, FileSystem }
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx.{ EdgeTriplet => SparkEdgeTriplet, TripletFields, Graph }
 
-import org.cgnal.graphe.tinkerpop.NativeGraphInputFormat
-
 package object graphe {
 
   private type TripletMap[A, B] = Map[(Long, Long, B), SparkEdgeTriplet[A, B]]
@@ -33,8 +31,6 @@ package object graphe {
 
     def loadGraph[A, B](location: String)(implicit A: ClassTag[A], B: ClassTag[B]) = GraphLoader[A, B](sparkContext, location)
 
-    def loadNativeGraph[A <: NativeGraphInputFormat](implicit A: ClassTag[A]) = NativeGraphLoader[A](sparkContext)
-
   }
 
   implicit class GraphEGraph[A, B](graph: Graph[A, B]) {
@@ -53,7 +49,5 @@ package object graphe {
     )
 
   }
-
-
 
 }

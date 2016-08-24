@@ -1,10 +1,6 @@
 package org.cgnal.graphe.tinkerpop.graph.titan
 
-import java.math.MathContext
-
 import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
-import org.apache.spark.graphx.EdgeTriplet
-import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex }
 
 private[titan] case class TitanId(partitionId: Long, id: Long) {
 

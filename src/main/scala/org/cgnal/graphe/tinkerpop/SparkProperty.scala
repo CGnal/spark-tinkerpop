@@ -1,6 +1,6 @@
 package org.cgnal.graphe.tinkerpop
 
-import org.apache.tinkerpop.gremlin.structure.{ Property => TinkerProperty, VertexProperty => TinkerVertexProperty, Element => TinkerElement, Vertex => TinkerVertex, Graph => TinkerGraph }
+import org.apache.tinkerpop.gremlin.structure.{ Property => TinkerProperty, VertexProperty => TinkerVertexProperty, Element => TinkerElement, Vertex => TinkerVertex }
 
 case class SparkProperty[A](protected val propKey: String, protected val propValue: A, protected val ownerOpt: Option[TinkerElement] = None) extends TinkerProperty[A] {
 

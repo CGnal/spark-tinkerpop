@@ -1,8 +1,8 @@
 package org.cgnal.graphe.tinkerpop
 
-import com.thinkaurelius.titan.core.schema.{ VertexLabelMaker => TitanVertexLabelMaker, EdgeLabelMaker => TitanEdgeLabelMaker, PropertyKeyMaker => TitanPropertyKeyMaker, TitanManagement }
-
 import scala.reflect.ClassTag
+
+import com.thinkaurelius.titan.core.schema.{ VertexLabelMaker => TitanVertexLabelMaker, EdgeLabelMaker => TitanEdgeLabelMaker, PropertyKeyMaker => TitanPropertyKeyMaker, TitanManagement }
 
 package object graph {
 
