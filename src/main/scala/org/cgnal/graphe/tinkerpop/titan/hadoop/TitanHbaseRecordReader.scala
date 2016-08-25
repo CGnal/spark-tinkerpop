@@ -1,6 +1,4 @@
-package org.cgnal.graphe.tinkerpop.hadoop
-
-import scala.collection.convert.decorateAsScala._
+package org.cgnal.graphe.tinkerpop.titan.hadoop
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.NullWritable

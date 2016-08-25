@@ -1,4 +1,4 @@
-package org.cgnal.graphe.tinkerpop.graph.titan
+package org.cgnal.graphe.tinkerpop.titan
 
 import scala.util.{ Try, Success, Failure }
 
@@ -10,13 +10,12 @@ import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
 import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
 
 import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges }
-import org.cgnal.graphe.tinkerpop.config.ResourceConfig
-import org.cgnal.graphe.tinkerpop.hadoop.TitanHbaseInputFormat
 import org.cgnal.graphe.tinkerpop.graph.{ TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider }
+import org.cgnal.graphe.tinkerpop.titan.hadoop.TitanHbaseInputFormat
 
-object TitanGraphProvider extends NativeTinkerGraphProvider with ResourceConfig with Serializable {
+object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceConfig with Serializable {
 
-  @transient protected val graph = TitanFactory.open(config)
+  @transient protected lazy val graph = TitanFactory.open(config)
 
   protected def nativeInputFormat = classOf[TitanHbaseInputFormat]
 
@@ -24,7 +23,7 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with ResourceConfig 
 
   private def maxPartitions    = config.getInt("cluster.max-partitions", 32)
   private def numPartitionBits = TitanNumberUtil getPowerOf2 maxPartitions
-  private def targetMaxIDs     = 1l << (63l - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH);
+  private def targetMaxIDs     = 1l << (63l - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH)
 
   private def withIdScaling[A, B, U](rdd: RDD[TinkerpopEdges[A, B]])(f: (Long => TitanId) => U) = {
     f { TitanIdLimits.fullRange.scaled(targetMaxIDs, maxPartitions) }

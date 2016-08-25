@@ -10,8 +10,6 @@ abstract class GraphWriter[A, B](graph: Graph[A, B])(implicit A: ClassTag[A], B:
 
   private def extractEdges(graph: Graph[A, B]) = graph.edges.asInstanceOf[EdgeRDDImpl[B, A]].partitionsRDD
 
-  final protected def doNothing: Unit = ()
-
   protected def saveVerticesRDD(rdd: => RDD[Vertex[A]]): Unit
 
   protected def saveEdgesRDD(rdd: => RDD[PartitionEdge[B, A]]): Unit

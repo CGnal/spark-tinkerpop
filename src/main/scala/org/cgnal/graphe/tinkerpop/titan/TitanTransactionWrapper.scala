@@ -1,4 +1,4 @@
-package org.cgnal.graphe.tinkerpop.graph.titan
+package org.cgnal.graphe.tinkerpop.titan
 
 import scala.util.Try
 

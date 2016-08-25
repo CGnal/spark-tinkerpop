@@ -1,4 +1,4 @@
-package org.cgnal.graphe.tinkerpop.graph.titan
+package org.cgnal.graphe.tinkerpop.titan
 
 import com.thinkaurelius.titan.core.TitanVertex
 

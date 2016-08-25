@@ -1,18 +1,32 @@
-package org.cgnal.graphe.tinkerpop.graph
+package org.cgnal.graphe.tinkerpop
+
+import scala.reflect.ClassTag
 
 import org.apache.spark.graphx.EdgeTriplet
 import org.apache.spark.rdd.RDD
 
+import com.thinkaurelius.titan.core.schema.{ VertexLabelMaker => TitanVertexLabelMaker, EdgeLabelMaker => TitanEdgeLabelMaker, PropertyKeyMaker => TitanPropertyKeyMaker, TitanManagement }
 import com.thinkaurelius.titan.graphdb.internal.ElementLifeCycle
 import com.thinkaurelius.titan.graphdb.vertices.StandardVertex
 import com.thinkaurelius.titan.graphdb.transaction.{ StandardTitanTx => StandardTitanTransaction }
 import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
 
-import org.cgnal.graphe.tinkerpop.{Arrows, TinkerpopEdges}
-
 package object titan {
 
   private type TitanVertexPair[A] = (TitanVertexContainer[A], TitanVertexContainer[A])
+
+  implicit class EnrichedTitanManagement(m: TitanManagement) {
+
+    def createVertexLabel(name: String)(f: TitanVertexLabelMaker => TitanVertexLabelMaker): Unit =
+      if (m.getVertexLabel(name) == null) f { m.makeVertexLabel(name) }.make()
+
+    def createEdgeLabel(name: String)(f: TitanEdgeLabelMaker => TitanEdgeLabelMaker): Unit =
+      if (m.getEdgeLabel(name) == null) f { m.makeEdgeLabel(name) }.make()
+
+    def createPropertyKey[A](name: String)(f: TitanPropertyKeyMaker => TitanPropertyKeyMaker)(implicit A: ClassTag[A]): Unit =
+      if (m.getPropertyKey(name) == null) f { m.makePropertyKey(name).dataType(A.runtimeClass.asInstanceOf[Class[A]]) }.make()
+
+  }
 
   implicit class EnrichedTitanEdges[A, B](rdd: RDD[TinkerpopEdges[A, B]]) {
 

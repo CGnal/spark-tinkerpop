@@ -9,7 +9,7 @@ package object kryo {
     def serializeWith(serializer: Serializer[A]) = KryoRegistrable(c, serializer)
 
     /**
-     * alias for `serializeWith`
+     * Alias for `serializeWith`
      */
     def :>:(serializer: Serializer[A]) = serializeWith(serializer)
 

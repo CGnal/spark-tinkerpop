@@ -9,7 +9,7 @@ import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex }
 
 import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges, NativeGraphInputFormat }
-import org.cgnal.graphe.tinkerpop.hadoop.EnrichedHadoopConfig
+import org.cgnal.graphe.EnrichedHadoopConfig
 
 trait NativeTinkerGraphProvider extends TinkerGraphProvider { this: Serializable =>
 

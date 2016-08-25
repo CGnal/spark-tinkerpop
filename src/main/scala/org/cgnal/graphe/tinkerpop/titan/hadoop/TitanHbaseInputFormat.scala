@@ -1,4 +1,4 @@
-package org.cgnal.graphe.tinkerpop.hadoop
+package org.cgnal.graphe.tinkerpop.titan.hadoop
 
 import org.apache.hadoop.conf.{ Configuration, Configurable }
 import org.apache.hadoop.hbase.client.Scan

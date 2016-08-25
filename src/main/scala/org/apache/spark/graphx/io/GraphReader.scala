@@ -1,12 +1,10 @@
 package org.apache.spark.graphx.io
 
-import org.apache.spark.SparkContext
-import org.apache.spark.graphx.impl.{PersistentReplicatedVertexView, PersistentGraphImpl}
-
 import scala.reflect.ClassTag
 
-import org.apache.spark.graphx.{ EdgeRDD, Graph, EdgeTriplet, VertexRDD }
 import org.apache.spark.rdd.RDD
+import org.apache.spark.graphx.impl.{ PersistentReplicatedVertexView, PersistentGraphImpl }
+import org.apache.spark.graphx.{ EdgeRDD, Graph, EdgeTriplet, VertexRDD }
 
 abstract class GraphReader[A, B](implicit A: ClassTag[A], B: ClassTag[B]) {
 
@@ -17,7 +15,7 @@ abstract class GraphReader[A, B](implicit A: ClassTag[A], B: ClassTag[B]) {
   protected def loadTripletsRDD: RDD[EdgeTriplet[A, B]]
 
   protected  def loadVertexView(hasSrcId: Boolean = false,
-                             hasDstId: Boolean = false) = PersistentReplicatedVertexView.loadView[A, B](
+                                hasDstId: Boolean = false) = PersistentReplicatedVertexView.loadView[A, B](
       EdgeRDD.fromEdgePartitions[B, A] { loadEdgesRDD },
       hasSrcId,
       hasDstId)

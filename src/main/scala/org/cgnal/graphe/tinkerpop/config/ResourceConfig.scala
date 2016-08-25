@@ -6,6 +6,7 @@ import org.apache.commons.configuration.{ Configuration => TinkerConfig, XMLConf
 import org.apache.commons.configuration.plist.PropertyListConfiguration
 
 import org.apache.tinkerpop.gremlin.util.config.YamlConfiguration
+
 import org.cgnal.graphe.tinkerpop.graph.TinkerGraphProvider
 
 import scala.util.Properties
