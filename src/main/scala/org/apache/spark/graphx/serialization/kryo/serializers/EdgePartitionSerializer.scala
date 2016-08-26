@@ -4,6 +4,7 @@ import org.apache.spark.graphx.impl.EdgePartition
 
 import com.esotericsoftware.kryo.{ Kryo, Serializer }
 import com.esotericsoftware.kryo.io.{ Output, Input }
+
 import org.apache.spark.graphx.io.KryoGraphIO
 
 object EdgePartitionSerializer extends Serializer[EdgePartition[Any, Any]] {

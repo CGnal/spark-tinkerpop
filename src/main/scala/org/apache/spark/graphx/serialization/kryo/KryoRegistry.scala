@@ -16,6 +16,21 @@ sealed trait BaseKryoRegistry {
     { classOf[EdgePartition[Any, Any]] serializeWith EdgePartitionSerializer }
 }
 
+/**
+ * Provides the list of classes and their serializers in the form of a sequence of `KryoRegistrable` instances, for
+ * example:
+ * {{{
+ *   import org.apache.spark.graphx.serialization.kryo.ClassRegistrable
+ *
+ *   ...
+ *
+ *   final protected def registry: Seq[KryoRegistrable[_]] =
+ *     { classOf[MyClass]      serializeWith MyClassSerializer      } :+
+ *     { classOf[MyOtherClass] serializeWith MyOtherClassSerializer }
+ * }}}
+ *
+ * Note that the basic Spark class serializers are already added by default.
+ */
 trait KryoRegistry extends BaseKryoRegistry { this: Serializable =>
 
   protected def registry: Seq[KryoRegistrable[_]]

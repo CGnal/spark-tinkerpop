@@ -7,6 +7,10 @@ import com.esotericsoftware.kryo.io.{ Input, Output }
 
 import com.twitter.chill.{ EmptyScalaKryoInstantiator, AllScalaRegistrar }
 
+/**
+ * Kryo serialization utility class, providing closure with a `KryoContext` pre-initialized with provided registry
+ * entries, along with `read` and `write` convenience methods.
+ */
 object KryoSerde extends Serializable {
 
   @transient private var kryoContext: Option[Kryo] = None
@@ -23,6 +27,14 @@ object KryoSerde extends Serializable {
     kryo
   }
 
+  /**
+   * Closure function providing a `KryoContext` initialized with the given `KryoRegistry`. Note that the initialization
+   * is only done if the internal `kryoContext` for this JVM has not yet been initialized.
+   * @param registry `KryoRegistry` instance containing all registered serializer classes
+   * @param f function to apply on the internal `KryoContext`
+   * @tparam A the expected return type of the function `f`
+   * @return the result of applying `f`
+   */
   def withKryoContext[A](registry: KryoRegistry)(f: Kryo => A) = kryoContext match {
     case Some(context) => f { context }
     case None          => f { makeKryoContext(registry) }
