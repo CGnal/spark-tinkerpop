@@ -19,8 +19,15 @@ import org.cgnal.graphe.tinkerpop.graph.{ NativeTinkerGraphProvider, EmptyTinker
 
 package object tinkerpop {
 
+  /**
+   * Alias for `InputFormat[NullWritable, VertexWritable]`.
+   */
   type NativeGraphInputFormat = InputFormat[NullWritable, VertexWritable]
 
+  /**
+   *
+   * @return
+   */
   def vertexAdditionNotSupported   = throw new UnsupportedOperationException("Vertex addition not supported")
 
   def edgeAdditionNotSupported     = throw new UnsupportedOperationException("Edge addition not supported")
