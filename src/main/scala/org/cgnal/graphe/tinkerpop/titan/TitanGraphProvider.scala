@@ -10,10 +10,10 @@ import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
 import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
 
 import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges }
-import org.cgnal.graphe.tinkerpop.graph.{ TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider }
+import org.cgnal.graphe.tinkerpop.graph.{ TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider, HadoopGraphLoader }
 import org.cgnal.graphe.tinkerpop.titan.hadoop.TitanHbaseInputFormat
 
-object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceConfig with Serializable {
+object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceConfig with HadoopGraphLoader with Serializable {
 
   @transient protected lazy val graph = TitanFactory.open(config)
 

@@ -8,6 +8,10 @@ import org.apache.tinkerpop.gremlin.structure.Transaction.Status
 import org.apache.tinkerpop.gremlin.structure.util.AbstractTransaction
 import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Transaction }
 
+/**
+ * A transaction implementation that does nothing (used only internally by the `EmptyTinkerGraph`.
+ * @param graph the owning graph
+ */
 final class EmptyTransaction(graph: TinkerGraph) extends AbstractTransaction(graph) {
 
   private def doNothing: Unit = ()

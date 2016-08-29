@@ -12,6 +12,11 @@ import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Vertex => 
 
 import org.cgnal.graphe.tinkerpop._
 
+/**
+ * Graph implementation that does nothing and holds no vertices or edges; only serves as default graph used when saving
+ * and loading graph data in a non-transactional format, such as Java-serialized data files.
+ * @param innerConfiguration the configuration used by this graph, which can be empty
+ */
 final class EmptyTinkerGraph(@transient private val innerConfiguration: Configuration) extends TinkerGraph with Serializable {
 
   def vertices(vertexIds: AnyRef*): JavaIterator[TinkerVertex] = Seq.empty[TinkerVertex].toIterator.asJava
