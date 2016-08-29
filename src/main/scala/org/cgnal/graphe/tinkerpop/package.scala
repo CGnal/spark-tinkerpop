@@ -25,29 +25,70 @@ package object tinkerpop {
   type NativeGraphInputFormat = InputFormat[NullWritable, VertexWritable]
 
   /**
-   *
-   * @return
+   * Throws an `UnsupportedOperationException` with a relevant error message.
    */
   def vertexAdditionNotSupported   = throw new UnsupportedOperationException("Vertex addition not supported")
 
+  /**
+   * Throws an `UnsupportedOperationException` with a relevant error message.
+   */
   def edgeAdditionNotSupported     = throw new UnsupportedOperationException("Edge addition not supported")
 
+  /**
+   * Throws an `UnsupportedOperationException` with a relevant error message.
+   */
   def vertexRemovalNotSupported    = throw new UnsupportedOperationException("Vertex removal not supported")
 
+  /**
+   * Throws an `UnsupportedOperationException` with a relevant error message.
+   */
   def edgeRemovalNotSupported      = throw new UnsupportedOperationException("Edge removal not supported")
 
+  /**
+   * Throws an `UnsupportedOperationException` with a relevant error message.
+   */
   def propertyAdditionNotSupported = throw new UnsupportedOperationException("Property addition not supported")
 
+  /**
+   * Throws an `UnsupportedOperationException` with a relevant error message.
+   */
   def propertyRemovalNotSupported  = throw new UnsupportedOperationException("Property removal not supported")
 
+  /**
+   * Throws a `NoSuchElementException` with a relevant error message.
+   * @param key the missing key
+   */
   def propertyMissing(key: String) = throw new NoSuchElementException(s"No value for property [$key]")
 
+  /**
+   * Throws an `UnsupportedOperationException` with a relevant error message.
+   */
   def computationNotSupported      = throw new UnsupportedOperationException("Graph computation not supported")
 
+  /**
+   * Enriches a spark `Graph[A, B]` instance to add suffix methods to easily transform and use graph data.
+   * @tparam A the vertex type
+   * @tparam B the edge type
+   */
   implicit class EnrichedSparkTinkerGraph[A, B](graph: SparkGraph[A, B]) {
 
+    /**
+     * Collects all vertex and edge information into one `RDD`, thereby facilitating the link between spark and
+     * tinkerpop.
+     * @param A the vertex type
+     * @param B the edge type
+     * @return an `RDD[TinkerpopEdges[A, B]]`
+     */
     def asTinkerpop(implicit A: ClassTag[A], B: ClassTag[B]) = SparkBridge.asTinkerpop(graph)
 
+    /**
+     * Saves the graph using the implicit `NativeTinkerGraphProvider` instance.
+     * @param useTinkerpop indicates whether id generation is done explicitly using tinkerpop APIs (typically using
+     *                     `T.id`) or is delegated to the graph system.
+     * @param graphProvider the `NativeGraphProvider` instance that is implements the saving operation.
+     * @param arrowV the transformation arrow `A >-> Map[String, AnyRef]`
+     * @param arrowE the transformation arrow `B >-> Map[String, AnyRef]`
+     */
     def saveNativeGraph(useTinkerpop: Boolean = true)(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative(useTinkerpop)
 
   }

@@ -103,10 +103,10 @@ trait TransactionWrapper { this: Serializable =>
    *                   (default to 1.second)
    * @param closeWhenDone indicates whether the transaction should be closed when the commit is successful or not
    */
-  final def attemptCommit(retryThreshold: Int = 5, retryDelay: FiniteDuration = 1.second, closeWhenDone: Boolean = true) = _attemptCommit(retryThreshold, retryDelay, closeWhenDone)
+  final def attemptCommit(retryThreshold: Int = 5, retryDelay: FiniteDuration = 1.second, closeWhenDone: Boolean = true) = _attemptCommit(retryThreshold, retryDelay, closeWhenDone, 1)
 
   @tailrec
-  private def _attemptCommit(retryThreshold: Int, retryDelay: FiniteDuration, attempt: Int = 1, closeWhenDone: Boolean = true): Unit = Try { commit() } match {
+  private def _attemptCommit(retryThreshold: Int, retryDelay: FiniteDuration, closeWhenDone: Boolean = true, attempt: Int = 1): Unit = Try { commit() } match {
     case Success(_) if closeWhenDone            =>
       log.info(s"Committed transaction at attempt [$attempt] - closing")
       close()
@@ -118,7 +118,7 @@ trait TransactionWrapper { this: Serializable =>
       throw new RuntimeException(s"Unable to commit transaction after [$attempt] attemp(s) -- rolling back", e)
     case Failure(_)                             =>
       sleepWarning(retryDelay) { s"Failed to commit transaction after attempt [$attempt] -- backing off for [${retryDelay.toSeconds}] second(s)" }
-      _attemptCommit(retryThreshold, retryDelay, attempt + 1, closeWhenDone)
+      _attemptCommit(retryThreshold, retryDelay, closeWhenDone, attempt + 1)
   }
 
 }
