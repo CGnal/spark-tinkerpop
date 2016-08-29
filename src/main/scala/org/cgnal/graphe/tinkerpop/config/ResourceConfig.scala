@@ -2,6 +2,8 @@ package org.cgnal.graphe.tinkerpop.config
 
 import java.io.{ InputStream, InputStreamReader }
 
+import scala.util.Properties
+
 import org.apache.commons.configuration.{ Configuration => TinkerConfig, XMLConfiguration, FileConfiguration => TinkerFileConfig, BaseConfiguration }
 import org.apache.commons.configuration.plist.PropertyListConfiguration
 
@@ -9,12 +11,23 @@ import org.apache.tinkerpop.gremlin.util.config.YamlConfiguration
 
 import org.cgnal.graphe.tinkerpop.graph.TinkerGraphProvider
 
-import scala.util.Properties
-
+/**
+ * Reads the graph configuration file and implements the `TinkerGraphProvider`'s `config` function. The loading
+ * mechanism tries to first load the file specified by the system property `-Dcgnal.graph.config` and then simply tries
+ * to load a file with name `graph=config.yml`. Note that the configuration file is always assumed to be on the
+ * classpath, and should be of type `yaml`, `yml`, `xml` or `properties`.
+ */
 trait ResourceConfig { this: TinkerGraphProvider =>
 
+  /**
+   * The default confguration file name (defaults to `graph-config.yml`).
+   */
   protected def defaultConfigFileName = "graph-config.yml"
 
+  /**
+   * The system property name that contains the name of the configuration file (defaults to `cgnal.graph.config`). Note
+   * that the file should be on the classpath and be of type `yaml`, `yml`, `xml` or `properties`.
+   */
   protected def configFileKey = "cgnal.graph.config"
 
   private lazy val configFileName = Properties.propOrElse(configFileKey, defaultConfigFileName)

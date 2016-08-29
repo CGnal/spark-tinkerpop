@@ -6,6 +6,9 @@ import com.thinkaurelius.titan.diskstorage.StandardStoreManager
 import com.thinkaurelius.titan.hadoop.config.TitanHadoopConfiguration
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration
 
+/**
+ * Provides values to easily access Titan configuration settings, along with default values.
+ */
 package object hadoop {
 
   // key   = titanmr.ioformat.cf-name

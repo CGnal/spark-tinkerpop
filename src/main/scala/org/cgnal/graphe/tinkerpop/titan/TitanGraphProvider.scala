@@ -13,6 +13,11 @@ import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges }
 import org.cgnal.graphe.tinkerpop.graph.{ TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider, HadoopGraphLoader }
 import org.cgnal.graphe.tinkerpop.titan.hadoop.TitanHbaseInputFormat
 
+/**
+ * The Titan-specific implementation of the `TinkerGraphProvider`, providing also native load and save functions.
+ * Additionally, this provider also exposes a function that wraps a closure onto a `Management` instance to allow
+ * for certain operations as table and schema creation.
+ */
 object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceConfig with HadoopGraphLoader with Serializable {
 
   @transient protected lazy val graph = TitanFactory.open(config)
@@ -29,6 +34,9 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
     f { TitanIdLimits.fullRange.scaled(targetMaxIDs, maxPartitions) }
   }
 
+  /**
+   * Saves edges '''and''' vertices.
+   */
   private def saveEdges[A, B](rdd: RDD[TinkerpopEdges[A, B]])(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) =
     withIdScaling(rdd) { scaler =>
       rdd.foreachPartition { partition =>
@@ -52,12 +60,18 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
     }
   }
 
+  /**
+   * Saves vertices '''only'''.
+   */
   private def saveVertices[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = rdd.foreachPartition {
     withGraphTransaction(_) { (graph, vertex) => graph.addVertex(vertex.asVertexKeyValue(useTinkerpop): _*) }.get // let exceptions throw
   }
 
-  private def saveAll[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveEdges(rdd)
-
+  /**
+   * Opens a `Management` instance and applies `f`, committing the transaction and the end in case of success, and
+   * rolling back in case of failure.
+   * @param f the function to applu on the fresh `Management` instance
+   */
   def withGraphManagement[U](f: TitanManagement => U) = {
     val management = graph.openManagement()
     Try { f(management) } match {
@@ -66,6 +80,6 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
     }
   }
 
-  def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveAll(rdd, useTinkerpop)
+  def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveEdges(rdd)
 
 }

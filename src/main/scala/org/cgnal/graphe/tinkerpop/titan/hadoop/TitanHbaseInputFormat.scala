@@ -5,15 +5,17 @@ import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
 import org.apache.hadoop.hbase.protobuf.ProtobufUtil
 import org.apache.hadoop.hbase.util.{ Base64, Bytes }
-import org.apache.hadoop.io.NullWritable
-import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, JobContext, InputFormat }
-
-import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
+import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, JobContext }
 
 import com.thinkaurelius.titan.diskstorage.hbase.HBaseStoreManager
 import com.thinkaurelius.titan.hadoop.formats.hbase.HBaseBinaryRecordReader
 
-class TitanHbaseInputFormat extends InputFormat[NullWritable, VertexWritable] with Configurable {
+import org.cgnal.graphe.tinkerpop.NativeGraphInputFormat
+
+/**
+ * `NativeInputFormat` implementation for Titan's hbase storage backend.
+ */
+class TitanHbaseInputFormat extends NativeGraphInputFormat with Configurable {
 
   private var config = new Configuration
 

@@ -11,8 +11,33 @@ import com.thinkaurelius.titan.hadoop.config.TitanHadoopConfiguration
 import org.cgnal.graphe.tinkerpop.config.ResourceConfig
 import org.cgnal.graphe.tinkerpop.graph.TinkerGraphProvider
 
+/**
+ * Extends the default `ResourceConfig` trait to allow the seamless copying of specific prefixed elements onto others,
+ * which avoids repetition across for example `storage` and `titanmr.io.conf` elements in the configuration file itself.
+ */
 trait TitanResourceConfig extends ResourceConfig { this: TinkerGraphProvider =>
 
+  /**
+   * The source and target namespaces in the form of a `Seq[((ConfigNamespace, ConfigNamespace), Boolean)]`, which
+   * represents `((source, target), includeSourceRoot)`. The result is that all config elements with prefix
+   * `root.${source}` (or simply `${source}` if `includeSourceRoot` is set to `false`) will be copied onto the target
+   * namespace as `${target}.${source}`, for example
+   * {{{
+   *   storage.backend = hbase*
+   * }}}
+   * becomes effectively
+   * {{{
+   *   storage.backend = hbase
+   *   titanmr.io.conf.storage.backend = hbase
+   * }}}
+   *
+   * Note that the default value for this is simply
+   * {{{
+   *   Seq { GraphDatabaseConfiguration.STORAGE_NS -> TitanHadoopConfiguration.GRAPH_CONFIG_KEYS -> false }
+   * }}}
+   * which copies all `storage` elements in configuration onto the `titanmr.io.conf` namespace.
+   * @return
+   */
   protected def namespaceMappings = Seq(
     GraphDatabaseConfiguration.STORAGE_NS -> TitanHadoopConfiguration.GRAPH_CONFIG_KEYS -> false
   )
