@@ -2,7 +2,7 @@ package org.cgnal.graphe.tinkerpop.graph
 
 import scala.annotation.tailrec
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{ Random, Failure, Success, Try }
 
 import org.slf4j.LoggerFactory
 
@@ -26,6 +26,8 @@ trait TransactionWrapper { this: Serializable =>
 
   def isClosed: Boolean = !isOpen
 
+  private def randomDelay = { Random.nextInt(1000) + 1000 }.milliseconds
+
   /**
    * Logs a debug line before executing `f`.
    * @param m the log message
@@ -41,8 +43,8 @@ trait TransactionWrapper { this: Serializable =>
    * @param retryDelay the amount of time to sleep in `FiniteDuration`
    * @param m the log message
    */
-  final protected def sleepWarning(retryDelay: FiniteDuration)(m: String) = {
-    log.warn(m)
+  final protected def sleepWarning(error: Throwable, retryDelay: FiniteDuration)(m: String) = {
+    log.warn(m, error)
     Thread.sleep(retryDelay.toMillis)
   }
 
@@ -86,7 +88,7 @@ trait TransactionWrapper { this: Serializable =>
   final def attempt[U](retryThreshold: Int, retryDelay: FiniteDuration, closeWhenDone: Boolean = true)(f: => Try[U]): Try[U] = for {
     _      <- attemptOpen()
     result <- f.recoverWith { case error => attemptRollback(error) }
-    _      <- Success { attemptCommit(retryThreshold, retryDelay, closeWhenDone) }
+    _      <- Try { attemptCommit(retryThreshold, retryDelay, closeWhenDone) }
   } yield result
 
   /**
@@ -137,8 +139,8 @@ trait TransactionWrapper { this: Serializable =>
       rollback()
       close()
       throw new RuntimeException(s"Unable to commit transaction after [$attempt] attemp(s) -- rolling back", e)
-    case Failure(_)                             =>
-      sleepWarning(retryDelay) { s"Failed to commit transaction after attempt [$attempt] -- backing off for [${retryDelay.toSeconds}] second(s)" }
+    case Failure(e)                             =>
+      sleepWarning(e, retryDelay + randomDelay) { s"Failed to commit transaction after attempt [$attempt] -- backing off for about [${retryDelay.toSeconds}] second(s)" }
       _attemptCommit(retryThreshold, retryDelay, closeWhenDone, attempt + 1)
   }
 

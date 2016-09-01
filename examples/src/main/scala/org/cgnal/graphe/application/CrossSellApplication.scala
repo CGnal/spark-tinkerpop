@@ -30,7 +30,10 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
   }
 
   private def loadVertices(rdd: RDD[CrossSellItems]) = Try {
-    rdd.groupBy { crossSell => crossSell.productId.toLong -> Item(crossSell.productId) }.keys.persist("Vertices")
+    rdd.flatMap { crossSell => Seq(
+      crossSell.productId.toLong -> Item(crossSell.productId),
+      crossSell.crossSellProductId.toLong -> Item(crossSell.crossSellProductId))
+    }.distinct().persist("Vertices")
   }
 
   private def loadEdges(rdd: RDD[CrossSellItems]) = Try {

@@ -9,7 +9,7 @@ import com.thinkaurelius.titan.core.schema.{ VertexLabelMaker => TitanVertexLabe
 import com.thinkaurelius.titan.graphdb.internal.ElementLifeCycle
 import com.thinkaurelius.titan.graphdb.vertices.StandardVertex
 import com.thinkaurelius.titan.graphdb.transaction.{ StandardTitanTx => StandardTitanTransaction }
-import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
+import com.thinkaurelius.titan.graphdb.types.VertexLabelVertex
 
 /**
  * Package object containing implicit enrichment classes to provide convenient suffix methods.
@@ -79,7 +79,7 @@ package object titan {
       a,
       transaction.addVertex(
         titanId,
-        new BaseVertexLabel(a.getClass.getSimpleName)
+        new VertexLabelVertex(transaction, titanId, ElementLifeCycle.New)
       )
     )
 

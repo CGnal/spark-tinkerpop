@@ -9,6 +9,8 @@ import org.apache.spark.rdd.RDD
 import com.thinkaurelius.titan.core.TitanFactory
 import com.thinkaurelius.titan.core.schema.TitanManagement
 import com.thinkaurelius.titan.core.util.TitanCleanup
+import com.thinkaurelius.titan.diskstorage.configuration.ConfigElement
+import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration
 import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
 import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
 
@@ -32,13 +34,13 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
 
   protected def createTransaction: TransactionWrapper = TinkerTransactionWrapper.create(graph)
 
-  private def maxPartitions    = config.getInt("cluster.max-partitions", 32)
-  private def numPartitionBits = TitanNumberUtil getPowerOf2 maxPartitions
-  private def targetMaxIDs     = 1l << (63l - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH)
+  def maxPartitions    = config.getInt(ConfigElement.getPath(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS), 32)
+  def numPartitionBits = TitanNumberUtil getPowerOf2 maxPartitions
+  def targetMaxIDs     = 1l << { 63 - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH }
 
   private def withIdScaling[A, B, U](rdd: RDD[TinkerpopEdges[A, B]])(f: (Long => TitanId) => U) = {
     log.debug(s"Creating scaler with targetMaxIds [$targetMaxIDs], maxPartitions [$maxPartitions]")
-    f { TitanIdLimits.fullRange.scaled(targetMaxIDs, maxPartitions) }
+    f { rdd.idLimits.scaled(targetMaxIDs, maxPartitions) }
   }
 
   /**
@@ -98,7 +100,7 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
   }
 
   def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveEdges {
-    rdd.filterNot { _.hasNulls }
+    rdd.filterNot { _.hasNullVertex }
   }
 
 }

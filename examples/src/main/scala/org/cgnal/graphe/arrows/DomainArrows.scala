@@ -11,7 +11,7 @@ sealed class ItemRawPropSetArrow extends Arrows.TinkerRawPropSetArrowF[Item] wit
   )
 
   def apR(map: Map[String, AnyRef]) = Item(
-    map("productId").asInstanceOf[Int]
+    map.getOrElse("productId", -1).asInstanceOf[Int]
   )
 
 }

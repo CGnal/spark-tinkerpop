@@ -29,8 +29,8 @@ private[titan] case class TitanIdLimits(minId: Long, maxId: Long) {
   def scaled(targetMax: Long, targetPartitionMax: Long)(value: Long): TitanId = {
     val scaledId = (scaled(value) * (targetMax - 2)) + 1
     TitanId(
-      partitionId = { scaledId % targetPartitionMax }.toLong,
-      id          = scaledId.toLong
+      partitionId = { (scaledId.toLong + (scaledId.remainder(1) * 1000).toLong) % targetPartitionMax },
+      id          =   scaledId.toLong
     )
   }
 
