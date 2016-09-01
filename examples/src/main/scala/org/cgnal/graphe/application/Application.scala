@@ -18,7 +18,7 @@ trait Application { this: SparkContextInstance =>
    * Logger dedicated to this application (not this instance). The name of the logger will reflect the name of the
    * application, given by the `--name` attribute.
    */
-  protected lazy val logger = Logger.getLogger { s"cgnal.${this.getClass.getSimpleName}" }
+  protected lazy val log = Logger.getLogger { s"cgnal.${this.getClass.getSimpleName}" }
 
   protected def show[A <: Product](rdd: RDD[A], lines: Int = 10)(implicit A: TypeTag[A]) = Try { rdd show lines }
 
@@ -27,10 +27,10 @@ trait Application { this: SparkContextInstance =>
   protected def timed[A](s: String)(f: => Try[A]): Try[A] = {
     val startedAt = System.currentTimeMillis()
     val tag = s"[$s] >"
-    logger.info(s"$tag Started timer")
+    log.info(s"$tag Started timer")
     f match {
-      case success @ Success(_) => logger.info { s"$tag Execution succeeded after [${(System.currentTimeMillis() - startedAt) / 1000d} second(s)]" }; success
-      case failure @ Failure(_) => logger.info { s"$tag Execution failed after [${(System.currentTimeMillis() - startedAt) / 1000d} second(s)]" }; failure
+      case success @ Success(_) => log.info { s"$tag Execution succeeded after [${(System.currentTimeMillis() - startedAt) / 1000d} second(s)]" }; success
+      case failure @ Failure(_) => log.info { s"$tag Execution failed after [${(System.currentTimeMillis() - startedAt) / 1000d} second(s)]" }; failure
     }
 
   }

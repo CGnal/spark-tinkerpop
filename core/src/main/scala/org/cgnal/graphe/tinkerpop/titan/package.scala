@@ -77,7 +77,10 @@ package object titan {
      */
     def labelVertex[A](a: A, titanId: Long) = TitanVertexContainer(
       a,
-      transaction.addVertex(titanId, new BaseVertexLabel(a.getClass.getSimpleName))
+      transaction.addVertex(
+        titanId,
+        new BaseVertexLabel(a.getClass.getSimpleName)
+      )
     )
 
   }

@@ -1,4 +1,6 @@
 ---
+cluster:
+  max-partitions: 16
 cache:
   db-cache: true
   db-cache-clean-wait: 20

@@ -2,13 +2,17 @@ package org.cgnal.graphe.tinkerpop.titan
 
 import scala.util.{ Try, Success, Failure }
 
+import org.slf4j.LoggerFactory
+
 import org.apache.spark.rdd.RDD
 
 import com.thinkaurelius.titan.core.TitanFactory
 import com.thinkaurelius.titan.core.schema.TitanManagement
+import com.thinkaurelius.titan.core.util.TitanCleanup
 import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
 import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
 
+import org.cgnal.graphe.EnrichedRDD
 import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges }
 import org.cgnal.graphe.tinkerpop.graph.{ TinkerTransactionWrapper, TransactionWrapper, NativeTinkerGraphProvider, HadoopGraphLoader }
 import org.cgnal.graphe.tinkerpop.titan.hadoop.TitanHbaseInputFormat
@@ -19,6 +23,8 @@ import org.cgnal.graphe.tinkerpop.titan.hadoop.TitanHbaseInputFormat
  * for certain operations as table and schema creation.
  */
 object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceConfig with HadoopGraphLoader with Serializable {
+
+  @transient lazy val log = LoggerFactory.getLogger("cgnal.titan.Provider")
 
   @transient protected lazy val graph = TitanFactory.open(config)
 
@@ -31,6 +37,7 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
   private def targetMaxIDs     = 1l << (63l - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH)
 
   private def withIdScaling[A, B, U](rdd: RDD[TinkerpopEdges[A, B]])(f: (Long => TitanId) => U) = {
+    log.debug(s"Creating scaler with targetMaxIds [$targetMaxIDs], maxPartitions [$maxPartitions]")
     f { TitanIdLimits.fullRange.scaled(targetMaxIDs, maxPartitions) }
   }
 
@@ -39,26 +46,25 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
    */
   private def saveEdges[A, B](rdd: RDD[TinkerpopEdges[A, B]])(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) =
     withIdScaling(rdd) { scaler =>
-      rdd.foreachPartition { partition =>
-       TitanTransactionWrapper.standard(graph).attemptTitanTransaction(retryThreshold, retryDelay) {
-        TitanTransactionWrapper.withIdManager(_) { (idManager, transaction) =>
-
-          partition.foreach {
-            case tinkerpopEdge if tinkerpopEdge.outEdges.isEmpty => transaction.labelVertex(
-              tinkerpopEdge.vertex,
-              scaler(tinkerpopEdge.vertexId).toTitan(idManager)
-            ).enrich
-            case tinkerpopEdge                                   => tinkerpopEdge.outEdges.foreach { triplet =>
-              triplet.connect {
-                transaction.standardVertex(triplet.srcAttr, scaler(triplet.srcId).toTitan(idManager)) ->
-                transaction.standardVertex(triplet.dstAttr, scaler(triplet.dstId).toTitan(idManager))
+      rdd.foreachPartition {
+        TitanTransactionWrapper.batched(graph, _, defaultBatchSize, retryThreshold, retryDelay) { (batch, transaction) =>
+          TitanTransactionWrapper.withIdManager(transaction) { idManager =>
+            batch.foreach {
+              case tinkerpopEdge if tinkerpopEdge.outEdges.isEmpty => transaction.labelVertex(
+                tinkerpopEdge.vertex,
+                scaler(tinkerpopEdge.vertexId).toTitan(idManager)
+              ).enrich
+              case tinkerpopEdge                                   => tinkerpopEdge.outEdges.foreach { triplet =>
+                triplet.connect {
+                  transaction.standardVertex(triplet.srcAttr, scaler(triplet.srcId).toTitan(idManager)) ->
+                    transaction.standardVertex(triplet.dstAttr, scaler(triplet.dstId).toTitan(idManager))
+                }
               }
             }
           }
-        }
-      }.get
+        }.get
+      }
     }
-  }
 
   /**
    * Saves vertices '''only'''.
@@ -80,6 +86,19 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
     }
   }
 
-  def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveEdges(rdd)
+  /**
+   * Shuts down and truncates the graph. Note that this is a point of no return: the graph cannot be used beyond
+   * this point.
+   */
+  def clearGraph() = Try {
+    log.warn("Shutting down graph instance...")
+    graph.close()
+    log.warn("Clearing graph...")
+    TitanCleanup.clear(graph)
+  }
+
+  def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = saveEdges {
+    rdd.filterNot { _.hasNulls }
+  }
 
 }

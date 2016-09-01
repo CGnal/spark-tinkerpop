@@ -22,11 +22,11 @@ package object application {
      * @param lines number of lines to show in the table
      */
     def show(lines: Int)(implicit A: TypeTag[A], ev: A <:< Product) = {
-      val charLimit = 20
-      val line     = "---------------"
-      val headLine = "==============="
+      val charLimit = 30
+      val line     = Seq.fill(charLimit) { "-" }.mkString
+      val headLine = Seq.fill(charLimit) { "=" }.mkString
 
-      val headers = ScalaReflection.schemaFor[A].dataType.asInstanceOf[StructType].fieldNames.toSeq.map { name => f"${name.shorten(charLimit)}%-15s" }
+      val headers = ScalaReflection.schemaFor[A].dataType.asInstanceOf[StructType].fieldNames.toSeq.map { name => f"${name.shorten(charLimit)}%-30s" }
       val header  = headers.mkString("|", "|", "|")
       val (countLines, bodyLines) = rdd.toLocalIterator.foldLeft(0l -> Seq.empty[A]) { (acc, next) =>
         acc match {
@@ -40,7 +40,7 @@ package object application {
           case array: Array[_] => s"[${array.mkString(", ").shorten(charLimit)}]"
           case seq: Seq[_]     => s"[${seq.mkString(", ").shorten(charLimit)}]"
           case other           => other.toString.shorten(charLimit)
-        }.map { value => f"$value%-15s" }.mkString("|", "|", "|")
+        }.map { value => f"$value%-30s" }.mkString("|", "|", "|")
       }
       val fullLineTop    = Seq.fill(headers.size) { line }.mkString("+", "-", "+")
       val fullLineBottom = Seq.fill(headers.size) { line }.mkString("+", "-", "+")
@@ -49,8 +49,6 @@ package object application {
 
       { fullLineTop +: header +: fullHeadLine +: body :+ fullLineBottom :+ statsLine :+ fullLineBottom }.foreach { println }
     }
-
-
 
     def shortenedName(charLimit: Int): String = Option { rdd.name }.map { _ shorten charLimit } getOrElse s"[RDD${rdd.id}]"
 

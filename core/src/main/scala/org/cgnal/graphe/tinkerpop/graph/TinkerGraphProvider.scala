@@ -28,7 +28,7 @@ trait TinkerGraphProvider { this: Serializable =>
   /**
    * The default amount of elements to process in an iterator before attempting a commit (defaults to `100`).
    */
-  protected def defaultBatchSize = 100
+  protected def defaultBatchSize = 50
 
   /**
    * The configuration for this graph.

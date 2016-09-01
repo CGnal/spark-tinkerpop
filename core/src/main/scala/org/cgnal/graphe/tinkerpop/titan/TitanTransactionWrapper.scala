@@ -10,7 +10,7 @@ import com.thinkaurelius.titan.graphdb.transaction.StandardTitanTx
 
 import org.cgnal.graphe.tinkerpop.graph.TransactionWrapper
 
-class TitanTransactionWrapper[A <: TitanTransaction](@transient private val titanTransaction: A) extends TransactionWrapper with Serializable {
+final class TitanTransactionWrapper[A <: TitanTransaction](@transient private val titanTransaction: A) extends TransactionWrapper with Serializable {
 
   def commit(): Unit = withDebug("Committing transaction") { titanTransaction.commit() }
 
@@ -18,10 +18,16 @@ class TitanTransactionWrapper[A <: TitanTransaction](@transient private val tita
 
   def isOpen: Boolean = titanTransaction.isOpen
 
-  def open(): Unit = log.debug("Transaction already open")
+  def open(): Unit = log.debug("Transaction cannot be opened")
 
   def close(): Unit = withDebug("Closing Transaction") { titanTransaction.close() }
 
+  /**
+   * Attempts to execute a function on the wrapped Titan transaction type.
+   * @param retryThreshold the amount of times to reattempt a commit before declaring failure and rolling back
+   * @param retryDelay the amount of time to back-off the current thread before reattempting to commit the transaction
+   * @param f the safe delayed function to attempt before committing or rolling back
+   */
   def attemptTitanTransaction[U](retryThreshold: Int, retryDelay: FiniteDuration)(f: A => Try[U]): Try[U] = attempt(retryThreshold, retryDelay) { f(titanTransaction) }
 
 }
@@ -32,7 +38,13 @@ object TitanTransactionWrapper {
 
   def standard(graph: TitanGraph) = new TitanTransactionWrapper(graph.newTransaction().asInstanceOf[StandardTitanTx])
 
-  def withIdManager[U](transaction: StandardTitanTx)(f: (IDManager, StandardTitanTx) => U) = Try { f(transaction.getIdInspector, transaction) }
+  def withIdManager[U](transaction: StandardTitanTx)(f: IDManager => U) = Try { f(transaction.getIdInspector) }
+
+  def batched[A](graph: TitanGraph, iterator: Iterator[A], batchSize: Int, retryThreshold: Int, retryDelay: FiniteDuration)(f: (Seq[A], StandardTitanTx) => Try[Unit]) = Try {
+    iterator.grouped(batchSize).foreach { batch =>
+      standard(graph).attemptTitanTransaction(retryThreshold, retryDelay) { f(batch, _) }.get
+    }
+  }
 
 }
 

@@ -14,6 +14,16 @@ case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEd
 
   def vertexLabelValue = vertex.getClass.getSimpleName
 
+  def hasNullVertex   = vertex == null
+
+  def hasNullInEdges  = { inEdges contains null }
+
+  def hasNullOutEdges = { outEdges contains null }
+
+  def hasNullEdges    = hasNullInEdges || hasNullOutEdges
+
+  def hasNulls        = hasNullVertex || hasNullEdges
+
   def asTinkerVertex(parentGraph: TinkerGraph, useTinkerpop: Boolean = true)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]): TinkerVertex = TinkerSparkVertex(
     vertexId      = vertexId,
     vertexLabel   = vertexLabelValue,

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
  */
 trait TransactionWrapper { this: Serializable =>
 
-  protected lazy val log = LoggerFactory.getLogger(s"transaction.${this.getClass.getSimpleName.filter { _.isLetterOrDigit }}")
+  protected lazy val log = LoggerFactory.getLogger(s"cgnal.transaction.${this.getClass.getSimpleName.filter { _.isLetterOrDigit }}")
 
   def commit(): Unit
 
@@ -90,10 +90,31 @@ trait TransactionWrapper { this: Serializable =>
   } yield result
 
   /**
+   * Applies `f` on batches of the input `iterator` and then tries to commit the transaction if the result of `f` was a
+   * `Success`, or rollback in case of `Failure`. Note that if an error occurs in a batch following other committed
+   * batches, on the current batch is rolled back, therefore leaving committed all the previously successful batches.
+   * @param retryThreshold the amount of times to reattempt a commit before declaring failure and rolling back
+   * @param retryDelay the amount of time to back-off the current thread before reattempting to commit the transaction
+   * @param closeWhenDone indicates whether the transaction should be closed when the commit is successful or not; note
+   *                      the transaction is always closed automatically when a rollback is performed after `f` fails
+   * @param f the safe delayed function to attempt before committing or rolling back
+   */
+  final def attemptBatched[A, U](iterator: Iterator[A], batchSize: Int, retryThreshold: Int, retryDelay: FiniteDuration, closeWhenDone: Boolean = true)(f: Seq[A] => Try[U]): Try[Unit] = Try {
+    iterator.grouped(batchSize).foreach { group => attempt[U](retryThreshold, retryDelay, closeWhenDone)(f(group)).get }
+  }
+
+
+  /**
    * Applies `attempt(5, 1.second)(f)`.
    * @param f the safe delayed function to attempt before committing or rolling back
    */
   final def attempt[U](f: => Try[U]): Try[U] = attempt(5, 1.second)(f)
+
+  /**
+   * Applies `attemptBatched(iterator)(50, 5, 1.second)(f)`.
+   * @param f the safe function to attempt before committing or rolling back
+   */
+  final def attemptBatched[A, U](iterator: Iterator[A])(f: Seq[A] => Try[U]): Try[Unit] = attemptBatched(iterator, 50, 5, 1.second)(f)
 
   /**
    * Attempts to commit the current transaction.

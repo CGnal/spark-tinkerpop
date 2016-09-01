@@ -11,6 +11,7 @@ import org.apache.hadoop.fs.{ Path, FileSystem }
 import org.apache.hadoop.conf.{ Configuration => HadoopConfig }
 
 import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import org.apache.spark.graphx.{ EdgeTriplet => SparkEdgeTriplet, TripletFields, Graph }
 
 /**
@@ -33,6 +34,12 @@ package object graphe {
     if (fileSystem.exists(locationPath)) { fileSystem.rename(locationPath, tempLocationPath) }
     fileSystem.rename(newLocationPath, locationPath)
     if (fileSystem.exists(tempLocationPath)) { fileSystem.delete(tempLocationPath, true) }
+  }
+
+  implicit class EnrichedRDD[A](rdd: RDD[A]) {
+
+    def filterNot(f: A => Boolean) = rdd.filter { !f(_) }
+
   }
 
   /**

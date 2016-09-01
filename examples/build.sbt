@@ -130,6 +130,8 @@ parallelExecution in Test := false
 
 fork in run := true
 
+outputStrategy := Some { StdoutOutput }
+
 autoAPIMappings := true
 
 testOptions in Test += Tests.Filter { _ endsWith "Spec" }

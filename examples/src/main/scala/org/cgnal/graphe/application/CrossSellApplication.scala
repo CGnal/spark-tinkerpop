@@ -2,7 +2,7 @@ package org.cgnal.graphe.application
 
 import java.lang.{ Integer => JavaInt }
 
-import scala.util.Try
+import scala.util.{ Try, Success, Failure }
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
@@ -26,14 +26,11 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
       case line if !line.startsWith("#") => CrossSellItems.fromString(line)
     }.collect {
       case Some(item) => item
-    }
-    .persist("Input")
+    }.persist("Input")
   }
 
   private def loadVertices(rdd: RDD[CrossSellItems]) = Try {
-    rdd.groupBy { crossSell =>
-      crossSell.productId.toLong -> Item(crossSell.productId)
-    }.keys.persist("Vertices")
+    rdd.groupBy { crossSell => crossSell.productId.toLong -> Item(crossSell.productId) }.keys.persist("Vertices")
   }
 
   private def loadEdges(rdd: RDD[CrossSellItems]) = Try {
@@ -66,8 +63,8 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
   private def save() = for {
     data     <- timed("Loading data")        { loadData()          }
     vertices <- timed("Generating Vertices") { loadVertices(data)  }
-    _        <- timed("Showing Vertices")    { show(vertices)      }
     edges    <- timed("Generting Edges")     { loadEdges(data)     }
+    _        <- timed("Showing Vertices")    { show(vertices)      }
     graph    <- graphX(vertices, edges)
     _        <- timed("Generating Schema")   { createTitanSchema() }
     _        <- timed("Saving Graph")        { saveGraph(graph)    }
@@ -79,10 +76,22 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
     _     <- timed("Recovering Edges")    { show(graph.edges.map { _.attr }) }
   } yield ()
 
-  def run() = for {
+  private def tearDown() = if (config.tearDown) {
+    TitanGraphProvider.clearGraph() match {
+      case Success(_) => log.info("Instance successfuly torn down")
+      case Failure(e) => log.error("Instance tear-down failed", e)
+    }
+  }
+
+  private def runBody() = for {
     _ <- save()
     _ <- load()
   } yield ()
+
+  def run() = runBody().transform(
+    _     => Try { tearDown() },
+    error => { tearDown(); Failure(error) }
+  )
 
 }
 
