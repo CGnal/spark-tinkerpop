@@ -18,7 +18,7 @@ private[titan] case class TitanVertexContainer[A](a: A, vertex: TitanVertex) {
    * @param arrow the transformation `Arrow` for `a` into a `Seq[AnyRef]`, which represents
    *              `Seq(key1, value1, key2, value2, ...)`
    */
-  def enrich(implicit arrow: Arrows.TinkerRawPropSetArrowF[A]) = arrow.apF(a).foreach { case (key, value) =>
+  def enrich(implicit arrow: Arrows.TinkerRawPropSetArrowF[A]): Unit = arrow.apF(a).foreach { case (key, value) =>
     vertex.property(key, value, Seq.empty[AnyRef]: _*)
   }
 

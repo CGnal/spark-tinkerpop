@@ -1,5 +1,7 @@
 package org.cgnal.graphe.tinkerpop.titan.hadoop
 
+import scala.collection.convert.decorateAsScala._
+
 import org.apache.hadoop.conf.{ Configuration, Configurable }
 import org.apache.hadoop.hbase.client.Scan
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat

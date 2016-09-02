@@ -119,6 +119,10 @@ object Arrows {
     case (k, v)            => key -> v
   }
 
+  private val classArrowF: Class[_] >-> Seq[AnyRef] = new (Class[_] >-> Seq[AnyRef]) {
+    override def apF(a: Class[_]): Seq[AnyRef] = Seq (vertexClassKey, a.getCanonicalName)
+  }
+
   /**
    * `Map[String, AnyRef] >-> TinkerVertexPropMap[AnyRef]`
    */
@@ -134,7 +138,7 @@ object Arrows {
    * edge properties.
    */
   implicit def tinkerKeyValuePropSetArrowF[A](implicit arrow: TinkerRawPropSetArrowF[A]): A >-> Seq[AnyRef] = new (A >-> Seq[AnyRef]) {
-    def apF(a: A) = arrow.apF(a).flatMap { case (k, v) => Seq(k, v) }.toSeq
+    def apF(a: A) = arrow.apF(a).flatMap { case (k, v) => Seq(k, v) }.toSeq ++ classArrowF.apF(a.getClass)
   }
 
   /**

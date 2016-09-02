@@ -10,6 +10,7 @@ import com.thinkaurelius.titan.graphdb.internal.ElementLifeCycle
 import com.thinkaurelius.titan.graphdb.vertices.StandardVertex
 import com.thinkaurelius.titan.graphdb.transaction.{ StandardTitanTx => StandardTitanTransaction }
 import com.thinkaurelius.titan.graphdb.types.VertexLabelVertex
+import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
 
 /**
  * Package object containing implicit enrichment classes to provide convenient suffix methods.
@@ -78,8 +79,8 @@ package object titan {
     def labelVertex[A](a: A, titanId: Long) = TitanVertexContainer(
       a,
       transaction.addVertex(
-        titanId,
-        new VertexLabelVertex(transaction, titanId, ElementLifeCycle.New)
+        Long.box(titanId),
+        transaction.getVertexLabel { a.getClass.getSimpleName }
       )
     )
 
@@ -104,6 +105,7 @@ package object titan {
         pair._2.vertex,
         Arrows.tinkerKeyValuePropSetArrowF(arrowE).apF(triplet.attr): _*
       )
+
       arrowV.apF(triplet.srcAttr).foldLeft(pair._1.vertex) { (vertex, prop) =>
         vertex.property(prop._1, prop._2, Seq.empty[AnyRef]: _*)
         vertex

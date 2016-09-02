@@ -12,3 +12,5 @@ storage:
     table: tinkerpop-examples
   hostname: localhost
   port: 2181
+ioformat:
+    filter-partitioned-vertices: true

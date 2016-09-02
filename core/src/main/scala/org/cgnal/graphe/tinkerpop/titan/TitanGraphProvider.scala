@@ -52,14 +52,14 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
         TitanTransactionWrapper.batched(graph, _, defaultBatchSize, retryThreshold, retryDelay) { (batch, transaction) =>
           TitanTransactionWrapper.withIdManager(transaction) { idManager =>
             batch.foreach {
-              case tinkerpopEdge if tinkerpopEdge.outEdges.isEmpty => transaction.labelVertex(
+              case tinkerpopEdge if tinkerpopEdge.outEdges.isEmpty => transaction.standardVertex(
                 tinkerpopEdge.vertex,
                 scaler(tinkerpopEdge.vertexId).toTitan(idManager)
               ).enrich
               case tinkerpopEdge                                   => tinkerpopEdge.outEdges.foreach { triplet =>
                 triplet.connect {
                   transaction.standardVertex(triplet.srcAttr, scaler(triplet.srcId).toTitan(idManager)) ->
-                    transaction.standardVertex(triplet.dstAttr, scaler(triplet.dstId).toTitan(idManager))
+                  transaction.standardVertex(triplet.dstAttr, scaler(triplet.dstId).toTitan(idManager))
                 }
               }
             }

@@ -16,6 +16,11 @@ package object hadoop {
   val titanEdgeStoreNameKey   = ConfigElement.getPath(TitanHadoopConfiguration.COLUMN_FAMILY_NAME)
   val titanEdgeStoreNameValue = TitanHadoopConfiguration.COLUMN_FAMILY_NAME.getDefaultValue
 
+  // key   = titanmr.bulkload.
+  // value = edgestore
+  val titanBulkPartitioningKey   = ConfigElement.getPath(TitanHadoopConfiguration.FILTER_PARTITIONED_VERTICES)
+  val titanBulkPartitioningValue = true
+
   // key   = storage.hbase.short-cf-names
   // value = true
   val titanShortenNameKey   = ConfigElement.getPath(HBaseStoreManager.SHORT_CF_NAMES)
