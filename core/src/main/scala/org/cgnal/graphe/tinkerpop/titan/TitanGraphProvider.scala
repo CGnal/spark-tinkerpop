@@ -1,5 +1,7 @@
 package org.cgnal.graphe.tinkerpop.titan
 
+import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph
+
 import scala.util.{ Try, Success, Failure }
 
 import org.slf4j.LoggerFactory
@@ -28,15 +30,15 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
 
   @transient lazy val log = LoggerFactory.getLogger("cgnal.titan.Provider")
 
-  @transient protected lazy val graph = TitanFactory.open(config)
+  @transient protected lazy val graph = TitanFactory.open(config).asInstanceOf[StandardTitanGraph]
 
   protected def nativeInputFormat = classOf[TitanHbaseInputFormat]
 
   protected def createTransaction: TransactionWrapper = TinkerTransactionWrapper.create(graph)
 
-  def maxPartitions    = config.getInt(ConfigElement.getPath(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS), 32)
-  def numPartitionBits = TitanNumberUtil getPowerOf2 maxPartitions
-  def targetMaxIDs     = 1l << { 63 - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH }
+  lazy val maxPartitions    = Int.unbox { graph.getConfiguration.getConfiguration.get(GraphDatabaseConfiguration.CLUSTER_MAX_PARTITIONS) }
+  lazy val numPartitionBits = TitanNumberUtil getPowerOf2 maxPartitions
+  lazy val targetMaxIDs     = 1l << { 63 - numPartitionBits - IDManager.USERVERTEX_PADDING_BITWIDTH }
 
   private def withIdScaling[A, B, U](rdd: RDD[TinkerpopEdges[A, B]])(f: (Long => TitanId) => U) = {
     log.debug(s"Creating scaler with targetMaxIds [$targetMaxIDs], maxPartitions [$maxPartitions]")

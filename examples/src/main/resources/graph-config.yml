@@ -1,6 +1,6 @@
 ---
 cluster:
-  max-partitions: 32
+  max-partitions: 16
 cache:
   db-cache: false
   db-cache-clean-wait: 20
@@ -9,7 +9,7 @@ cache:
 storage:
   backend: hbase
   hbase:
-    table: tinkerpop-examples
+    table: cross-sell-example
   hostname: localhost
   port: 2181
 ioformat:
