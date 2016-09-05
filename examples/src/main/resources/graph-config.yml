@@ -1,4 +1,8 @@
 ---
+application:
+  back-off-time: 1500
+  reties: 5
+  batch-size: 100
 cluster:
   max-partitions: 16
 cache:

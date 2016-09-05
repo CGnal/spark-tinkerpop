@@ -7,6 +7,8 @@ import org.apache.commons.configuration.{ Configuration => TinkerConfig }
 
 import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph }
 
+import org.cgnal.graphe.tinkerpop.config._
+
 /**
  * Facade for convenience methods on a tinkerpop graph. Provides useful closure functions that expose the underlying
  * graph and any transaction needed by the client. Note that the provider is also expected to be responsible for the
@@ -17,18 +19,18 @@ trait TinkerGraphProvider { this: Serializable =>
   /**
    * The amount of times a transaction commit should be retried in case of failure (defaults to `5`)
    */
-  protected def retryThreshold = 5
+  protected def retryThreshold = config.getInt(retryKey, retryValue)
 
   /**
    * The amount of time to wait in `FiniteDuration` before reattempting a commit on a transaction in case of failure
-   * (defaults to `1.second`)
+   * (defaults to `1.5 seconds`)
    */
-  protected def retryDelay = 1.second
+  protected def retryDelay = config.getInt(backOffKey, backOffValue).milliseconds
 
   /**
    * The default amount of elements to process in an iterator before attempting a commit (defaults to `100`).
    */
-  protected def defaultBatchSize = 50
+  protected def defaultBatchSize = config.getInt(batchSizeKey, batchSizeValue)
 
   /**
    * The configuration for this graph.
