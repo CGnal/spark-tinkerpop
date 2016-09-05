@@ -1,6 +1,6 @@
 package org.cgnal.graphe
 
-import java.io.{ FileNotFoundException, File }
+import java.io.{ PrintStream, FileNotFoundException, File}
 
 import org.apache.commons.cli.MissingArgumentException
 
@@ -26,7 +26,7 @@ package object application {
      * Shows the first `lines` number of rows in this `RDD` and prints the values in tabular format
      * @param lines number of lines to show in the table
      */
-    def show(lines: Int)(implicit A: TypeTag[A], ev: A <:< Product) = {
+    def show(lines: Int, writer: PrintStream = System.out)(implicit A: TypeTag[A], ev: A <:< Product) = {
       val charLimit = 30
       val line     = Seq.fill(charLimit) { "-" }.mkString
       val headLine = Seq.fill(charLimit) { "=" }.mkString
@@ -52,7 +52,7 @@ package object application {
       val fullHeadLine   = Seq.fill(headers.size) { headLine }.mkString("|", "=", "|")
       val statsLine = s"Total Rows: $countLines"
 
-      { fullLineTop +: header +: fullHeadLine +: body :+ fullLineBottom :+ statsLine :+ fullLineBottom }.foreach { println }
+      { fullLineTop +: header +: fullHeadLine +: body :+ fullLineBottom :+ statsLine :+ fullLineBottom }.foreach { writer.print }
     }
 
     def shortenedName(charLimit: Int): String = Option { rdd.name }.map { _ shorten charLimit } getOrElse s"[RDD${rdd.id}]"

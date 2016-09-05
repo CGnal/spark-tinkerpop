@@ -1,9 +1,12 @@
 package org.cgnal.graphe.application
 
+
+import java.io.{BufferedOutputStream, OutputStream, PrintStream}
+
 import scala.reflect.runtime.universe.TypeTag
 import scala.util.{ Success, Failure, Try }
 
-import org.apache.log4j.Logger
+import org.slf4j.LoggerFactory
 
 import org.apache.hadoop.security.UserGroupInformation
 
@@ -12,7 +15,8 @@ import org.apache.spark.rdd.RDD
 import org.cgnal.graphe.application.config.{NoSecurityConfig, KerberosConfig, ApplicationConfig}
 
 /**
- * Partial interface for all subclasses that can be run as applications.
+ * Partial interface for all subclasses that can be run as applications. For a class to be an `Application` means that
+ * it has access to a `SparkContext` instance via the `SparkContextInstance` trait mix-in.
  */
 trait Application { this: SparkContextInstance =>
 
@@ -20,13 +24,22 @@ trait Application { this: SparkContextInstance =>
    * Logger dedicated to this application (not this instance). The name of the logger will reflect the name of the
    * application, given by the `--name` attribute.
    */
-  protected lazy val log = Logger.getLogger { s"cgnal.${this.getClass.getSimpleName}" }
+  protected lazy val log = LoggerFactory.getLogger { s"cgnal.${this.getClass.getSimpleName}" }
 
-  protected def show[A <: Product](rdd: RDD[A], lines: Int = 10)(implicit A: TypeTag[A]) = Try { rdd show lines }
+  /**
+   * Utility method for applciation instances to show the contexts of `RDD`s whose elements are `Product`s. This will
+   * automatically print out the first `lines` (default 10) elements of the `RDD` to the logger's INFO print stream.
+   * @param rdd
+   * @param lines
+   * @param A
+   * @tparam A
+   * @return
+   */
+  final protected def show[A <: Product](rdd: RDD[A], lines: Int = 10)(implicit A: TypeTag[A]) = Try { rdd.show(lines, Slf4jOutputStream.info(log).asStream) }
 
-  protected def timed[A](f: => Try[A]): Try[A] = timed(System.currentTimeMillis().toString) { f }
+  final protected def timed[A](f: => Try[A]): Try[A] = timed(System.currentTimeMillis().toString) { f }
 
-  protected def timed[A](s: String)(f: => Try[A]): Try[A] = {
+  final protected def timed[A](s: String)(f: => Try[A]): Try[A] = {
     val startedAt = System.currentTimeMillis()
     val tag = s"[$s] >"
     log.info(s"$tag Started timer")
