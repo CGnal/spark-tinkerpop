@@ -8,7 +8,7 @@ private[titan] case class TitanId(partitionId: Long, id: Long) {
 
 }
 
-private[titan] case class TitanIdLimits(minId: Long, maxId: Long) {
+case class TitanIdLimits(minId: Long, maxId: Long) {
 
   private lazy val _range = BigDecimal(maxId) - BigDecimal(minId)
 
@@ -29,8 +29,8 @@ private[titan] case class TitanIdLimits(minId: Long, maxId: Long) {
   def scaled(targetMax: Long, targetPartitionMax: Long)(value: Long): TitanId = {
     val scaledId = (scaled(value) * (targetMax - 2)) + 1
     TitanId(
-      partitionId = { (scaledId.toLong + (scaledId.remainder(1) * 1000).toLong) % targetPartitionMax },
-      id          =   scaledId.toLong
+      partitionId = value % targetPartitionMax,
+      id          = scaledId.toLong
     )
   }
 

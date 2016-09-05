@@ -2,6 +2,7 @@ package org.cgnal.graphe.tinkerpop
 
 import java.util.UUID
 
+import scala.language.implicitConversions
 import scala.collection.convert.decorateAsScala._
 
 import org.apache.spark.graphx.{ Edge => SparkEdge }
@@ -119,8 +120,8 @@ object Arrows {
     case (k, v)            => key -> v
   }
 
-  private val classArrowF: Class[_] >-> Seq[AnyRef] = new (Class[_] >-> Seq[AnyRef]) {
-    override def apF(a: Class[_]): Seq[AnyRef] = Seq (vertexClassKey, a.getCanonicalName)
+  def tinkerMetadataRawPropSetArrow[A](implicit arrow: TinkerRawPropSetArrowF[A]) = new TinkerRawPropSetArrowF[A]  {
+    def apF(a: A) = arrow.apF(a)
   }
 
   /**
@@ -138,7 +139,7 @@ object Arrows {
    * edge properties.
    */
   implicit def tinkerKeyValuePropSetArrowF[A](implicit arrow: TinkerRawPropSetArrowF[A]): A >-> Seq[AnyRef] = new (A >-> Seq[AnyRef]) {
-    def apF(a: A) = arrow.apF(a).flatMap { case (k, v) => Seq(k, v) }.toSeq ++ classArrowF.apF(a.getClass)
+    def apF(a: A) = arrow.apF(a).flatMap { case (k, v) => Seq(k, v) }.toSeq
   }
 
   /**
@@ -180,11 +181,11 @@ object Arrows {
     }
   }
 
-  implicit def tinkerSparkVertexArrowR[A](implicit arrow: TinkerVertexArrowR[A]) = new TinkerVertexArrowR[SparkVertex[A]] {
+  implicit def tinkerSparkVertexArrowR[A](implicit arrow: TinkerVertexArrowR[A]): TinkerVertexArrowR[SparkVertex[A]] = new TinkerVertexArrowR[SparkVertex[A]] {
     def apR(vertex: TinkerVertex) = vertexId { vertex.id() } -> arrow.apR(vertex)
   }
 
-  implicit def tinkerSparkEdgeArrowR[A](implicit arrow: TinkerEdgeArrowR[A]) = new TinkerEdgeArrowR[SparkEdge[A]] {
+  implicit def tinkerSparkEdgeArrowR[A](implicit arrow: TinkerEdgeArrowR[A]): TinkerEdgeArrowR[SparkEdge[A]] = new TinkerEdgeArrowR[SparkEdge[A]] {
     def apR(edge: TinkerEdge) = SparkEdge[A] (
       srcId = vertexId { edge.inVertex().id()  },
       dstId = vertexId { edge.outVertex().id() },
@@ -196,7 +197,7 @@ object Arrows {
    * Transforms a `TinkerVertexPropSetArrowR[A, AnyRef]` into a `A <-< Vertex`, which combined with
    * `tinkerVertexPropSetArrowR[A]` chains into `A <-< Map[String, AnyRef] <-< TinkerVertexPropMap[AnyRef] <-< Vertex`
    */
-  implicit def tinkerVertexArrowR[A](implicit arrow: TinkerVertexPropSetArrowR[A, AnyRef]) = new TinkerVertexArrowR[A] {
+  implicit def tinkerVertexArrowR[A](implicit arrow: TinkerVertexPropSetArrowR[A, AnyRef]): TinkerVertexArrowR[A] = new TinkerVertexArrowR[A] {
     def apR(vertex: TinkerVertex) = arrow.apR {
       vertex.properties[AnyRef]().asScala.map { prop => prop.key() -> prop }.toMap[String, TinkerVertexProperty[AnyRef]]
     }
@@ -206,7 +207,7 @@ object Arrows {
    * Transforms a `TinkerPropSetArrowR[A, AnyRef]` into a `A <-< Edge`, which combined with
    * `tinkerPropSetArrowR[A]` chains into `A <-< Map[String, AnyRef] <-< TinkerPropMap[AnyRef] <-< Edge`
    */
-  implicit def tinkerEdgeArrowR[A](implicit arrow: TinkerPropSetArrowR[A, AnyRef]) = new TinkerEdgeArrowR[A] {
+  implicit def tinkerEdgeArrowR[A](implicit arrow: TinkerPropSetArrowR[A, AnyRef]): TinkerEdgeArrowR[A] = new TinkerEdgeArrowR[A] {
     def apR(edge: TinkerEdge) = arrow.apR {
       edge.properties[AnyRef]().asScala.map { prop => prop.key() -> prop }.toMap[String, TinkerProperty[AnyRef]]
     }
