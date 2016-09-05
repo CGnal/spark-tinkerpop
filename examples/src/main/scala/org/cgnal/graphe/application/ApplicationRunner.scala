@@ -22,15 +22,9 @@ object ApplicationRunner {
     case Nil          => Failure { new IllegalArgumentException("Invalid empty argument list -- you should supply the application name followed by the appropriate list of argument") }
   }
 
-  private def applySecurity(args: Array[String]) = SecurityConfigReader.read(args.toSeq) match {
-    case KerberosConfig(user, keytabLocation) => Try { UserGroupInformation.loginUserFromKeytab(user, keytabLocation) }
-    case NoSecurityConfig                     => Success { log.info("Skipping security: no information detected") }
-  }
-
   private def safeMain(args: Array[String]) = for {
-//    _           <- applySecurity(args)
     application <- createApplication(args)
-    _           <- application.run()
+    _           <- application.start()
     _           <- application.close()
   } yield ()
 

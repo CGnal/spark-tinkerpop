@@ -8,9 +8,9 @@ case class SparkApplicationConfig(numThreads: Int,
                                   shuffleFraction: Double,
                                   storageFraction: Double) extends Config
 
-object SparkApplicationConfigReader extends ConfigReader[SparkApplicationConfig] with ScallopConfigReader[SparkApplicationConfig] {
+object SparkApplicationConfigReader extends ScallopConfigReader[SparkApplicationConfig] {
 
-  protected def scallopts(scallop: Scallop): Scallop = scallop
+  def scallopts(scallop: Scallop): Scallop = scallop
   .opt[Int]   ("threads",    't', "number of executor threads", default(2))
   .opt[String]("memory",     'm', "executor memory",            default("2g"))
   .opt[Int]   ("partitions", 'p', "default num partitions",     default(2))

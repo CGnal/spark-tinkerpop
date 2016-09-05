@@ -10,13 +10,13 @@ trait ConfigReader[A <: Config] {
 
 }
 
-trait ScallopConfigReader[A <: Config] { this: ConfigReader[A] =>
+abstract class ScallopConfigReader[A <: Config] extends ConfigReader[A] {
 
   final protected def default[B](b: B) = () => Some { b }
 
-  protected def scallopts(scallop: Scallop): Scallop
-
   protected def consumeScallop(scallop: Scallop): A
+
+  def scallopts(scallop: Scallop): Scallop
 
   final def readScallop(scallop: Scallop): A  = consumeScallop {
     scallopts { scallop }

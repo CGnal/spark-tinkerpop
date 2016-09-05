@@ -17,10 +17,10 @@ object SecurityConfig {
 
 }
 
-object SecurityConfigReader extends ConfigReader[SecurityConfig] with ScallopConfigReader[SecurityConfig] {
+object SecurityConfigReader extends ScallopConfigReader[SecurityConfig] {
 
-  protected def scallopts(scallop: Scallop): Scallop = scallop
-    .opt[String]("kerberos", 'k', "(optional) kerberos setting [user]@[keytab-location]")
+  def scallopts(scallop: Scallop): Scallop = scallop
+    .opt[String](name = "kerberos", short = 'k', descr = "(optional) kerberos setting [user]@[keytab-location]")
 
   def consumeScallop(scallop: Scallop): SecurityConfig = scallop.get[String]("kerberos").map { SecurityConfig.fromString }.getOrElse { NoSecurityConfig }
 

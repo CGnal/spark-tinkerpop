@@ -5,9 +5,11 @@ import scala.util.{ Success, Failure, Try }
 
 import org.apache.log4j.Logger
 
+import org.apache.hadoop.security.UserGroupInformation
+
 import org.apache.spark.rdd.RDD
 
-import org.cgnal.graphe.application.config.ApplicationConfig
+import org.cgnal.graphe.application.config.{NoSecurityConfig, KerberosConfig, ApplicationConfig}
 
 /**
  * Partial interface for all subclasses that can be run as applications.
@@ -42,7 +44,23 @@ trait Application { this: SparkContextInstance =>
    * Note that hook is expected to return a `Try[Unit]` which implies that the execution of the hook can be
    * '''expected''' to side-effects.
    */
-  def run(): Try[Unit]
+  protected def run(): Try[Unit]
+
+  /**
+   * Secures the application using security information defined in `config`.
+   */
+  final def secure(): Try[Unit] =  config.securityConfig match {
+    case KerberosConfig(user, keytabLocation) => Try { UserGroupInformation.loginUserFromKeytab(user, keytabLocation) }
+    case NoSecurityConfig                     => Success { log.info("Skipping security: no information detected") }
+  }
+
+  /**
+   * Starts the application by first trying to secure the application and then by calling `run()`.
+   */
+  final def start() = for {
+    _ <- secure()
+    _ <- run()
+  } yield ()
 
   /**
    * Close hook which can be overridden by the inheriting classes, publicly exposes to be run by other classes or

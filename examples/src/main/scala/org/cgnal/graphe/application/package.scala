@@ -2,8 +2,13 @@ package org.cgnal.graphe
 
 import java.io.{ FileNotFoundException, File }
 
+import org.apache.commons.cli.MissingArgumentException
+
+import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
 import scala.util.{ Failure, Success, Try }
+
+import org.rogach.scallop.Scallop
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.ScalaReflection
@@ -89,6 +94,15 @@ package object application {
           n   <- asList(next)
         } yield n ::: all
       }
+    }
+
+  }
+
+  implicit class EnrichedScallop(scallop: Scallop) {
+
+    def mandatory[A](name: String)(implicit A: ClassTag[A], TA: TypeTag[A]) = scallop.get[A](name) match {
+      case Some(a) => a
+      case None    => throw new MissingArgumentException(s"Unable to find mandatory argument [$name] of type [${A.runtimeClass.getCanonicalName}]")
     }
 
   }
