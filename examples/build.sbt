@@ -82,9 +82,9 @@ def jUnitVersion      = "4.8.1"
 def scalaTestVersion  = "2.0"
 def scalaCheckVersion = "1.12.4"
 
-lazy val root = project in here enablePlugins JavaAppPackaging enablePlugins UniversalPlugin
+lazy val examples = project in here enablePlugins JavaAppPackaging enablePlugins UniversalPlugin
 
-lazy val projectAssembly = { project in assemblyDir }.settings(ivyOverride, assemblyJar, assemblyResolutionStrategy, assemblyNoCache) dependsOn root
+lazy val projectAssembly = { project in assemblyDir }.settings(ivyOverride, assemblyJar, assemblyResolutionStrategy, assemblyNoCache) dependsOn examples
 
 resolvers in ThisBuild += "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 

@@ -14,7 +14,8 @@ NUM_PARTS=4
 SHUFFLE=0.1
 STORAGE=0.4
 
-sbt -Dhadoop.home.dir=$WIN_HADOOP_HOME \
+#sbt -Dhadoop.home.dir=$WIN_HADOOP_HOME \
+sbt \
 "project examples" \
 "run $APP_NAME \
 -i $X_INPUT_FILE \

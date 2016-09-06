@@ -55,7 +55,7 @@ def jUnitVersion      = "4.8.1"
 def scalaTestVersion  = "2.0"
 def scalaCheckVersion = "1.12.4"
 
-lazy val root = project in here
+lazy val core = project in here
 
 resolvers in ThisBuild += "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
 
