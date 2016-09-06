@@ -1,0 +1,9 @@
+---
+application:
+  back-off-time: 1500
+  retries: 5
+  batch-size: 100
+cluster:
+  max-partitions: 16
+ioformat:
+    filter-partitioned-vertices: true

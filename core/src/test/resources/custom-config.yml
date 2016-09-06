@@ -1,0 +1,7 @@
+---
+application:
+  back-off-time: 2000
+  retries: 1
+  batch-size: 1000
+ioformat:
+    filter-partitioned-vertices: false
