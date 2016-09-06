@@ -26,7 +26,7 @@ trait TransactionWrapper { this: Serializable =>
 
   def isClosed: Boolean = !isOpen
 
-  private def randomDelay = { Random.nextInt(1000) + 1000 }.milliseconds
+  private def randomDelay = { Random.nextInt(1000) + 100 }.milliseconds
 
   /**
    * Logs a debug line before executing `f`.

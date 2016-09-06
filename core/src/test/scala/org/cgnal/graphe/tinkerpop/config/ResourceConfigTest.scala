@@ -12,7 +12,7 @@ class ResourceConfigTest
 
   "Resource Config" when {
 
-    "Working with defaults" must {
+    "working with defaults" must {
 
       "load values correctly" in withConfig { conf =>
         conf.getInt("application.back-off-time")                mustBe 1500
@@ -24,7 +24,7 @@ class ResourceConfigTest
 
     }
 
-    "Working with a specific file" must {
+    "working with a specific file" must {
 
       "load values correctly" in withConfig("custom-config.yml") { conf =>
         conf.getInt("application.back-off-time")                mustBe 2000
