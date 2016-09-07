@@ -13,7 +13,7 @@ import org.apache.spark.graphx.{ Graph, EdgeTriplet }
  * @tparam A the vertex type
  * @tparam B the edge type
  */
-abstract class GraphWriter[A, B](graph: Graph[A, B])(implicit A: ClassTag[A], B: ClassTag[B]) {
+abstract class GraphWriter[A, B](graph: Graph[A, B], location: String)(implicit A: ClassTag[A], B: ClassTag[B]) {
 
   private def extractEdges(graph: Graph[A, B]) = graph.edges.asInstanceOf[EdgeRDDImpl[B, A]].partitionsRDD
 

@@ -14,7 +14,7 @@ import org.apache.spark.rdd.RDD
  * @param A the vertex type
  * @param B the edge type
  */
-sealed class JavaGraphWriter[A, B](graph: Graph[A, B], location: String)(implicit A: ClassTag[A], B: ClassTag[B]) extends GraphWriter[A, B](graph) {
+sealed class JavaGraphWriter[A, B](graph: Graph[A, B], location: String)(implicit A: ClassTag[A], B: ClassTag[B]) extends GraphWriter[A, B](graph, location) {
 
   protected def saveVerticesRDD(rdd: => RDD[(VertexId, A)]) = rdd.saveAsObjectFile { s"$location/$vertexLocation" }
 

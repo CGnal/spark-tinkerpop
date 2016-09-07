@@ -19,8 +19,6 @@ import org.cgnal.graphe.tinkerpop.graph.{ NativeTinkerGraphProvider, EmptyTinker
 
 package object tinkerpop {
 
-  val vertexClassKey = "_class"
-
   /**
    * Alias for `InputFormat[NullWritable, VertexWritable]`.
    */

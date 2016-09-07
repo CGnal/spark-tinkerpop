@@ -14,7 +14,7 @@ import org.apache.spark.rdd.RDD
  * @tparam A the vertex type
  * @tparam B the edge type
  */
-sealed class KryoGraphWriter[A, B](graph: Graph[A, B], location: String, registry: KryoRegistry)(implicit A: ClassTag[A], B: ClassTag[B]) extends GraphWriter[A, B](graph) {
+sealed class KryoGraphWriter[A, B](graph: Graph[A, B], location: String, registry: KryoRegistry)(implicit A: ClassTag[A], B: ClassTag[B]) extends GraphWriter[A, B](graph, location) {
 
   protected def saveVerticesRDD(rdd: => RDD[Vertex[A]]) = KryoGraphIO.writeGrouped[Vertex[A]](registry, s"$location/$vertexLocation") { rdd }
 

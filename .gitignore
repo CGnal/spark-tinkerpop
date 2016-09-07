@@ -4,6 +4,7 @@
 .project
 .settings
 .DS_STORE
+test-data/
 target
 project/project
 project/target
