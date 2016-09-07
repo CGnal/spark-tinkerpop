@@ -6,19 +6,31 @@ class TransactionWrapperTest extends TransactionWrapperCases {
 
   "Transaction Wrapper" when {
 
-    "working with successful operations" must {
+    "trying to commit" must {
 
       "commit successfully" in successfulCommit()
-
-    }
-
-    "working with unsuccessful operations" must {
 
       "commit after failing once" in failOnce()
 
       "commit after retrying multiple times" in failMultipleTimes()
 
-      "rollback after failing a sufficiently large number of times" in rollbackAfterFailure()
+      "rollback after failing a sufficiently large number of times" in failTooManyTimes()
+
+    }
+
+    "working with transactional operations" must {
+
+      "commit successfully when the operation is a Success" in successfulTransaction()
+
+      "rollback successfully when the operation is a Failure" in failedTransaction()
+
+    }
+
+    "working with batched operations" must {
+
+      "commit successfully when the operations are Successful" in successfulBatchedTransaction()
+
+      "rollback successfully when a batch operation is a Failure" in failedBatchedTransaction()
 
     }
 

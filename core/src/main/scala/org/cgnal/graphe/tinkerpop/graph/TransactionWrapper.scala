@@ -59,9 +59,10 @@ trait TransactionWrapper { this: Serializable =>
    * Tries to rollback the transaction before rethrowing `error`.
    * @param error the error which triggered the rollback
    */
-  final protected def attemptRollback(error: Throwable) = Try {
+  final protected def attemptRollback(error: Throwable, closeWhenDone: Boolean = true) = Try {
     log.error("Execution failed within transaction: rolling back", error)
     rollback()
+    if (closeWhenDone) close()
     throw error
   }
 
@@ -104,7 +105,6 @@ trait TransactionWrapper { this: Serializable =>
   final def attemptBatched[A, U](iterator: Iterator[A], batchSize: Int, retryThreshold: Int, retryDelay: FiniteDuration, closeWhenDone: Boolean = true)(f: Seq[A] => Try[U]): Try[Unit] = Try {
     iterator.grouped(batchSize).foreach { group => attempt[U](retryThreshold, retryDelay, closeWhenDone)(f(group)).get }
   }
-
 
   /**
    * Applies `attempt(5, 1.second)(f)`.

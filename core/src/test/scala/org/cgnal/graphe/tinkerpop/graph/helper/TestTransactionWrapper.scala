@@ -30,10 +30,14 @@ sealed class TestTransactionWrapper(private var expectedFails: Int = 0) extends 
 
   def transactionLog = _transactionLog
 
-  def hasRolledBack = transactionLog.exists { _.action == Action.rolledBack }
+  def numCommits = transactionLog.count { _.action == Action.committed }
+
+  def numRollbacks = transactionLog.count { _.action == Action.rolledBack }
+
+  def hasRolledBack = numRollbacks > 0
 
   def timeElapsed = transactionLog match {
-    case action1 :: action2 :: _ => action1.timestamp - action2.timestamp
+    case action1 :: action2 :: _ => { action1.timestamp - action2.timestamp }.toInt
     case other                   => throw new RuntimeException(s"Transaction log must contain at least 2 entries, found [${other.size}]")
   }
 
