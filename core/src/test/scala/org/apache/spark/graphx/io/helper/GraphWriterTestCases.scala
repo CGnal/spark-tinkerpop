@@ -23,10 +23,10 @@ trait GraphWriterTestCases[W[_, _] <: GraphWriter[_, _]] {
 
   private def validateGraph(graph: Graph[User, Connection], location: String) = {
     lazy val vertices = sparkContext.readObjectVertices[User](location)
-    lazy val edges    = sparkContext.readObjectEdges[Knows](location)
+    lazy val edges    = sparkContext.readObjectTriplets[User, Knows](location)
 
-    vertices mustContainAll graph.vertices.values
-    edges    mustContainAll graph.edges.map { _.attr }
+    vertices mustContainAll graph.vertices
+    edges    mustContainAll graph.edges
   }
 
   def test() = withLocation { location =>
@@ -34,7 +34,6 @@ trait GraphWriterTestCases[W[_, _] <: GraphWriter[_, _]] {
     writeGraph(graph, location)
     validateGraph(graph, location)
   }
-
 
 
 }

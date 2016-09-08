@@ -1,6 +1,6 @@
 package org.apache.spark.test
 
-import org.apache.spark.graphx.{Graph, Edge, VertexRDD}
+import org.apache.spark.graphx.{EdgeTriplet, Graph, Edge, VertexRDD}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.RDD
 import org.cgnal.common.domain.{Connection, Knows, Identifiable}
@@ -33,19 +33,19 @@ final class TestSparkContext(conf: SparkConf, numThreads: Int) {
   def edges[A <: Identifiable](vertices: RDD[(Long, A)], groups: Int = 30)(implicit A: ClassTag[A]): RDD[Edge[Connection]] = {
     val binned = vertices.map { case (id, a) => (id % groups, a) }
     binned.join(binned).flatMap {
-      case (_, (user1, user2)) if user1 == user2 => Seq.empty[Edge[Connection]]
-      case (_, (user1, user2))                   => Seq(Edge(user1.id, user2.id, user1 relatesTo user2), Edge(user2.id, user1.id, user2 relatesTo user1))
+      case (_, (a1, a2)) if a1 == a2 => Seq.empty[Edge[Connection]]
+      case (_, (a1, a2))             => Seq(Edge(a1.id, a2.id, a1 relatesTo a2), Edge(a1.id, a2.id, a2 relatesTo a1))
     }
   }
 
   def graph[A <: Identifiable](gen: Gen[A], numVertices: Int = 100, numGroups: Int = 30)(implicit A: ClassTag[A]) = {
     val vertexRDD = vertices(gen, numVertices)
     val edgeRDD   = edges(vertexRDD, numGroups)
-    Graph(vertexRDD, edgeRDD)
+    Graph[A, Connection](vertexRDD, edgeRDD)
   }
 
-  def readObjectVertices[A <: Identifiable](location: String)(implicit A: ClassTag[A]) = sparkContext.objectFile[A](s"$location/$vertexLocation")
+  def readObjectVertices[A <: Identifiable](location: String)(implicit A: ClassTag[A]) = sparkContext.objectFile[(Long, A)](s"$location/$vertexLocation")
 
-  def readObjectEdges[A <: Connection](location: String)(implicit A: ClassTag[A]) = sparkContext.objectFile[A](s"$location/$edgeLocation")
+  def readObjectTriplets[A <: Identifiable, B <: Connection](location: String)(implicit A: ClassTag[A], B: ClassTag[B]) = sparkContext.objectFile[EdgeTriplet[A, B]](s"$location/$tripletLocation")
 
 }

@@ -10,7 +10,11 @@ package object test {
 
     def mustContainAll[B](other: Seq[B]): Unit = if (!containsAll(other)) throw new RuntimeException("The RDD contains missing elements")
 
-    def mustContainAll[B](other: RDD[B]): Unit = mustContainAll { other.collect().toSeq }
+    def mustContainAll[B](other: RDD[B]): Unit = mustContainAll { other.toLocalIterator.toList }
+
+    def toList   = rdd.toLocalIterator.toList
+
+    def toStream = rdd.toLocalIterator.toSeq
 
   }
 

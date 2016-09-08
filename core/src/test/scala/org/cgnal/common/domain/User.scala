@@ -1,12 +1,11 @@
 package org.cgnal.common.domain
 
+import scala.io.Source
+import scala.util.Random
+
 import org.scalacheck.Gen
 
-import scala.io.Source
-
 import org.cgnal.common.DataGenerator
-
-import scala.util.Random
 
 case class User(id: Long, name: String, gender: Gender) extends Identifiable {
 
