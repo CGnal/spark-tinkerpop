@@ -11,12 +11,12 @@ import org.apache.spark.graphx._
 import com.thinkaurelius.titan.core.Multiplicity.MULTI
 import com.thinkaurelius.titan.core.Cardinality.SINGLE
 
+import org.cgnal.graphe.application.config.{ CrossSellApplicationConfigReader, CrossSellApplicationConfig }
 import org.cgnal.graphe.arrows.DomainArrows._
-import org.cgnal.graphe.domain.{Item, CrossSellItems}
+import org.cgnal.graphe.domain.{ Item, CrossSellItems }
 import org.cgnal.graphe.tinkerpop.{ EnrichedSparkTinkerGraph, EnrichedTinkerSparkContext }
 import org.cgnal.graphe.tinkerpop.graph.NativeTinkerGraphProvider
 import org.cgnal.graphe.tinkerpop.titan.{ TitanGraphProvider, EnrichedTitanManagement }
-import org.cgnal.graphe.application.config.{CrossSellApplicationConfigReader, CrossSellApplicationConfig}
 
 sealed class CrossSellApplication(protected val sparkContext: SparkContext,
                                   val config: CrossSellApplicationConfig) extends Application with SparkContextInstance {
