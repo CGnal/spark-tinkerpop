@@ -1,20 +1,24 @@
 package org.apache.spark.test
 
-import org.apache.spark.graphx.{EdgeTriplet, Graph, Edge, VertexRDD}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.rdd.RDD
-import org.cgnal.common.domain.{Connection, Knows, Identifiable}
-
 import scala.reflect.ClassTag
 
 import org.scalacheck.Gen
 
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.io.{ BytesWritable, NullWritable }
+
 import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.graphx.io._
+import org.apache.spark.graphx.{ EdgeTriplet, Graph, Edge }
+import org.apache.spark.graphx.serialization.kryo.{ KryoRegistry, KryoSerde }
+import org.apache.spark.rdd.RDD
 
 import org.cgnal.common.CGnalGen
+import org.cgnal.common.domain.{ Connection, Knows, Identifiable }
 
 final class TestSparkContext(conf: SparkConf, numThreads: Int) {
+
+  private var isUp = false
 
   def this(applicationName: String, numThreads: Int = 1) = this(new SparkConf().setAppName(applicationName), numThreads)
 
@@ -22,9 +26,24 @@ final class TestSparkContext(conf: SparkConf, numThreads: Int) {
     conf.setMaster(s"local[$numThreads]")
   )
 
-  def sparkContext = _sparkContext
+  private lazy val _fileSystem = FileSystem.get(_sparkContext.hadoopConfiguration)
 
-  def rdd[A](seq: Seq[A])(implicit A: ClassTag[A]): RDD[A] = _sparkContext.parallelize(seq)
+  private def whenStarted[U](f: => U) = if (isUp) f else throw new IllegalStateException("SparkContext is not started!")
+
+  def startup(): Unit = {
+    _sparkContext
+    isUp = true
+  }
+
+  def shutdown(): Unit = if (isUp) {
+    _sparkContext.stop()
+    isUp = false
+  }
+
+  def sparkContext = whenStarted { _sparkContext }
+  def fileSystem   = whenStarted { _fileSystem   }
+
+  def rdd[A](seq: Seq[A])(implicit A: ClassTag[A]): RDD[A] = sparkContext.parallelize(seq)
 
   def rdd[A](gen: Gen[A], length: Int = 100)(implicit A: ClassTag[A]): RDD[A] = rdd { gen take length }
 
@@ -46,6 +65,18 @@ final class TestSparkContext(conf: SparkConf, numThreads: Int) {
 
   def readObjectVertices[A <: Identifiable](location: String)(implicit A: ClassTag[A]) = sparkContext.objectFile[(Long, A)](s"$location/$vertexLocation")
 
+  def readKryoVertices[A <: Identifiable](location: String, registry: KryoRegistry)(implicit A: ClassTag[A]) = sparkContext.sequenceFile(
+    s"$location/$vertexLocation",
+    classOf[NullWritable],
+    classOf[BytesWritable]
+  ).flatMap { case (_, bytes) => KryoSerde.read[Array[(Long, A)]](registry)(bytes.getBytes) }
+
   def readObjectTriplets[A <: Identifiable, B <: Connection](location: String)(implicit A: ClassTag[A], B: ClassTag[B]) = sparkContext.objectFile[EdgeTriplet[A, B]](s"$location/$tripletLocation")
+
+  def readKryoTriplets[A <: Identifiable, B <: Connection](location: String, registry: KryoRegistry)(implicit A: ClassTag[A], B: ClassTag[B]) = sparkContext.sequenceFile(
+    s"$location/$tripletLocation",
+    classOf[NullWritable],
+    classOf[BytesWritable]
+  ).flatMap { case (_, bytes) => KryoSerde.read[Array[EdgeTriplet[A, B]]](registry)(bytes.getBytes) }
 
 }

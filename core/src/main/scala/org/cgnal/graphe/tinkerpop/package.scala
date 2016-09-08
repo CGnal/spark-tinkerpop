@@ -118,7 +118,6 @@ package object tinkerpop {
       outEdges      = outEdge.toList,
       propertiesMap = asTinkerPropertySet
     )
-
   }
 
   implicit class EnrichedTinkerEdgeRDD[A, B](rdd: RDD[TinkerpopEdges[A, B]]) {

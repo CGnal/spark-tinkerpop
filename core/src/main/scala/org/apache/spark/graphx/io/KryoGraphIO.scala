@@ -17,15 +17,13 @@ import org.apache.spark.rdd.RDD
  */
 object KryoGraphIO extends Serializable {
 
-  @transient private lazy val _javaSerializer = createJavaSerializer()
-
   private def createJavaSerializer(serializer: JavaSerializer = new JavaSerializer()) = {
     serializer.setAcceptsNull(true)
     serializer.setImmutable(true)
     serializer
   }
 
-  def javaSerializer = _javaSerializer
+  def javaSerializer = createJavaSerializer()
 
   /**
    * Reads and de-serializes Kryo data grouped in chunks of 128.
