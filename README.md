@@ -112,7 +112,7 @@ sparkContext.load[V, E](location).asKryo
 
 #### GraphSON
 
-GraphSON is the simplest integration point that Spark-Tinkerpop provides with Tinkerpop in terms of persistence, but introduces also the most important one. In all situations, Spark-Tinkerpop requires compliance with a simple [arrow-conversion](core/src/main/scala/org/cgnal/graphe/tinkerpop/Arrows.scala) mechanic, which simply means implementing the traits:
+[GraphSON](http://tinkerpop.apache.org/docs/current/reference/#graphson-reader-writer) is the simplest integration point that Spark-Tinkerpop provides with Tinkerpop in terms of persistence, but introduces also the most important one. In all situations, Spark-Tinkerpop requires compliance with a simple [arrow-conversion](core/src/main/scala/org/cgnal/graphe/tinkerpop/Arrows.scala) mechanic, which simply means implementing the traits:
 
 ```scala
 trait >->[A, B] extends Serializable {
@@ -130,5 +130,75 @@ trait <-<[A, B] extends Serializable {
 
 This simply means that `A >-> B` is an arrow converting elements of type `A` into elements of type `B`, while the reverse is natually valid for the dual `A <-< B`, which is conceptually identical to `B >-> A`.
 
-This conversion is used to transform elements of type `A` into tinkerpop's `Vertex` and `Edge` types, which are then required for serialization. For ease of use, the application is **not** expected to implement the transformation into an abstract `Vertex` type, but instead one simply needs to implement a simpler `A >-> Map[String, AnyRef]` transformation, also known as `Arrows.TinkerRawPropSetArrowF[A]` and another arrow `A <-< Map[String, AnyRef]`, also known as `Arrows.TinkerRawPropSetArrowR[A]`, noting the last `F` and `R` denoting direction; the `Arrows` object provides various utility functions to allow for simply adapting these arrows, as illustrated in the [example](examples/src/main/org/cgnal/graphe/arrows/DomainArrows.scala).
+This conversion is used to transform elements of type `A` into tinkerpop's `Vertex` and `Edge` types, which are then required for serialization. For ease of use, the application is **not** expected to implement the transformation into an abstract `Vertex` type, but instead one simply needs to implement a simpler `A >-> Map[String, AnyRef]` transformation, also known as `Arrows.TinkerRawPropSetArrowF[A]` and another arrow `A <-< Map[String, AnyRef]`, also known as `Arrows.TinkerRawPropSetArrowR[A]`, noting the last `F` and `R` denoting direction; the `Arrows` object provides various utility functions to allow for simply adapting these arrows, as illustrated in the [example](examples/src/main/scala/org/cgnal/graphe/arrows/DomainArrows.scala).
+
+Loading or saving the graph can then be done in exactly the same way as Java or Kryo:
+
+```scala
+...
+
+import org.cgnal.graphe._
+
+...
+// save graph at [location]
+graph.save(location).asGraphSON
+...
+// load graph from [location]: Vertices are of type V, Edges are of type E
+sparkContext.load[V, E](location).asGraphSON
+```
+
+Note that although the serialization process itself is not very flexible, the `Arrow` implementations can be used to provide backward compatibility.
+
+#### Gryo
+
+Like GraphSON, [Gryo](http://tinkerpop.apache.org/docs/current/reference/#gryo-reader-writer) is a graph serialization format that Tinkerpop understands, and in terms of usage for persistence within Spark-Tinkerpop, the same rules for GraphSON apply to Gryo, where the same `Arrow` definitions needs to exist before and reading or writing can take place. When this is implemented, loading and saving is again done using:
+
+```scala
+...
+
+import org.cgnal.graphe._
+
+...
+// save graph at [location]
+graph.save(location).asGryo
+...
+// load graph from [location]: Vertices are of type V, Edges are of type E
+sparkContext.load[V, E](location).asGryo 
+```
+
+Graph Providers
+-------
+
+At the very basic level, Spark-Tinkerpop wraps any Tinkerpop compliant graph implementation, such as Titan, StarVertex and so on, to provide an interface that allows for all internals and moving parts to talk to a graph without knowing its underlying implementation. This layer of abstraction on top of Tinkerpop (which already is a high-level layer of abstraction) is necessary for bridging the gap between the various graph-vendor implementations and the intended underlying Spark implementations; for example, without this interface, the library would need to ensure that the graphs are serializable to comply with Spark's model, which is more than likely not a very realistic requirement. While relieving the implementor of as much nitty-gritty as possible, the [`TinkerGraphProvider`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/TinkerGraphProvider.scala) is therefore what makes the graph operations possible while adhering to the somewhat strict serialization requirements that Spark imposes.
+
+Currently two implementations are provided by default:
+
+1. [`EmptyTinkerGraphProvider`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/EmptyTinkerGraphProvider.scala), which serves as a simple stub needed for persisting GraphSON and Gryo data. This graph provider does not actually allow storage and retrieval of vertices, and also provides no real transactional states: as already mentioned, it simply wouldn't need to exist unless it wasn't necessary for complying with Tinkerpop APIs when storing and retrieving GraphSON and Gryo -serialized data.
+1. [`TitanGraphProvider`](core/src/main/scala/org/cgnal/graphe/tinkerpop/titan/TitanGraphProvider.scala), which is a functional implementation that allows interaction with Titan graphs. Note that this provider also allows for 'native' communication, which by-passes some of the Tinkerpop APIs, going straight on to more efficient ways of communicating with the underlying graph engine (more on this below).
+
+The graph provider also provides closures over the graph itself, and more importantly, over its transactions.
+
+#### Configuration
+
+Every graph provider is expected to require some sort of configuration, which in most cases can be simply and automatically loaded by mixing in the [ResourceConfig](core/src/main/scala/org/cgnal/graphe/tinkerpop/config/ResourceConfig.scala) trait. The system will try to first load the file name passed as a value to the JVM property whose key is `cgnal.graph.config`, therefore passing for example `-Dcgnal.graph.config=custom-graph-config.yml` when starting the Java process. If this key is not found, the system tries to automatically load `graph-config.yml`, when both fail, a `RuntimeException` is thrown. Note that the given file **must be available on the class-path**.
+
+The supported property file formats are 
+
+|Format      | Extension          |
+|------------|--------------------|
+| YAML       | `.yaml` or `.yml`  |
+| XML        | `.xml`             |
+| Properties | `.properties`      |
+
+Upon detecting any file extension that is not in this table, the system will throw an `IllegalArgumentException`.
+
+Native Interfaces
+-------
+
+Spark-Tinkerpop offers the possibility of storing and retrieving graph data to and from external graph databases such as Titan, Neo4J and OrientDB. Without discounting the capabilities of commercial graph engines, even when playing on a level playing field in terms of performance, Spark offers some nice additional advantages, such as the possibility of running various statistical and machine learning algorithms on the graph data, or even integrating with data that already exists in a warehouse outside the graph-computing platform.
+
+The integration occurs in a two-step conversion process that leverages the Tinkerpop compliant APIs which serve as an intermediate compatibility format. The integration point is the [`NativeTinkerGraphProvider`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/NativeTinkerGraphProvider.scala#L18) trait that extends `TinkerGraphProvider` to add native loading and saving methods. Note that for simplicity, in Hadoop clusters, one can simply mix-in the [`HadoopGraphLoader`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/NativeTinkerGraphProvider.scala#L50) trait to automatically inherit an implementation for `loadNative` that automatically loads data into Spark using a provided implementation of a Hadoop `InputFormat`. 
+
+
+
 
