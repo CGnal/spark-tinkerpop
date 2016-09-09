@@ -192,6 +192,16 @@ The supported property file formats are
 
 Upon detecting any file extension that is not in this table, the system will throw an `IllegalArgumentException`.
 
+Besides the graph configuration needed by the underlying graph engine, the application also needs some additional settings that determine behavior around for example transactions. Supported configuration settings include:
+
+|Key                        | Description                                                                                                   | Default |
+|---------------------------|---------------------------------------------------------------------------------------------------------------|:-------:|
+| application.back-off-time | The approximate amount of time in milliseconds to wait before re-attempting to commit the current transaction | 1500    |
+| application.retries       | The amount of times to retry the commit, backing off each time before declaring failure and rolling back      | 5       |
+| application.batch-size 	| The size of each batch to commit when using the batching functions                                            | 100     |
+
+Note that these configurations are simply defaults and can be overridden by passing the desired overrides when calling any `attemp` method on the relevant [`TransactionWrapper`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/TransactionWrapper.scala) implementation.
+
 Native Interfaces
 -------
 
