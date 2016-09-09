@@ -1,8 +1,9 @@
 package org.apache.spark.graphx.serialization.kryo.serializers
 
-import com.esotericsoftware.kryo.io.{Input, Output}
-import com.esotericsoftware.kryo.{Kryo, Serializer}
-import org.cgnal.common.domain.{Female, Gender, Male, User}
+import com.esotericsoftware.kryo.io.{ Input, Output }
+import com.esotericsoftware.kryo.{ Kryo, Serializer }
+
+import org.cgnal.common.domain.{ Female, Gender, Male, User }
 
 object UserSerializer extends Serializer[User] {
 
