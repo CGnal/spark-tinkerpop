@@ -16,10 +16,10 @@ object ExampleApplicationConfigReader extends ScallopConfigReader[ExampleApplica
   def scallopts(scallop: Scallop): Scallop =
   { SparkApplicationConfigReader.scallopts _ } andThen
   { SecurityConfigReader.scallopts _         } andThen {
-    _.opt[String](name = "input",     short = 'i', descr =  "input file location")
+    _.opt[String](name = "input",     short = 'i', descr = "input file location")
      .opt[String](name = "hadoop",    short = 'h', descr = "hadoop config directory")
      .opt[String](name = "lib-dir",   short = 'l', descr = "extra library directory", default = default("libext"))
-     .toggle     (name = "tear-down", short = 'x', descrYes = "tears down the graph and deletes its contents", default = default(false))
+     .toggle     (name = "tear-down", short = 'd', descrYes = "tears down the graph and deletes its contents", default = default(false))
   } apply scallop
 
   protected def consumeScallop(scallop: Scallop): ExampleApplicationConfig = ExampleApplicationConfig(
