@@ -1,6 +1,6 @@
 package org.cgnal.graphe
 
-import java.io.{ PrintStream, FileNotFoundException, File}
+import java.io.{ PrintStream, FileNotFoundException, File }
 
 import org.apache.commons.cli.MissingArgumentException
 
@@ -14,11 +14,15 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
 
+import org.cgnal.graphe.tinkerpop.graph.EmptyTinkerGraphProvider
 import org.cgnal.graphe.tinkerpop.titan.TitanGraphProvider
 
 package object application {
 
-  implicit def tinkerGraphProvider = TitanGraphProvider
+  object Providers {
+    implicit def tinkerGraphProvider = TitanGraphProvider
+    implicit def emptyGraphProvider  = EmptyTinkerGraphProvider
+  }
 
   implicit class EnrichedRDD[A](rdd: RDD[A]) {
 

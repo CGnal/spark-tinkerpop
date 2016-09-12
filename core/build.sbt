@@ -96,3 +96,5 @@ parallelExecution in Test := false
 autoAPIMappings := true
 
 testOptions in Test += Tests.Filter { _ endsWith "Test" }
+
+unmanagedBase := baseDirectory.value / "libext"

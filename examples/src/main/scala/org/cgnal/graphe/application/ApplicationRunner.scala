@@ -1,20 +1,17 @@
 package org.cgnal.graphe.application
 
-import scala.util.{ Try, Success, Failure }
+import scala.util.{ Success, Failure }
 
 import org.slf4j.LoggerFactory
-
-import org.apache.hadoop.security.UserGroupInformation
-
-import org.cgnal.graphe.application.config.{ KerberosConfig, NoSecurityConfig, SecurityConfigReader }
 
 object ApplicationRunner {
 
   private lazy val log = LoggerFactory.getLogger("cgnal.application.Runner")
 
   private def chooseApplication(name: String, args: Seq[String]) = name.toLowerCase match {
-    case "cross-sell" => CrossSellApplication.create(args)
-    case other        => Failure { new IllegalArgumentException(s"Invalid application name [$other]") }
+    case "titan"    => TitanApplication.create(args)
+    case "graphson" => GraphSONApplication.create(args)
+    case other      => Failure { new IllegalArgumentException(s"Invalid application name [$other]") }
   }
 
   private def createApplication(args: Array[String]) = args.toList match {

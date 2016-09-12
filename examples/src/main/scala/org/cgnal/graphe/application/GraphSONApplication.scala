@@ -1,25 +1,21 @@
 package org.cgnal.graphe.application
 
-import java.lang.{ Integer => JavaInt }
-
 import scala.util.{ Try, Success, Failure }
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx._
 
-import com.thinkaurelius.titan.core.Multiplicity.MULTI
-import com.thinkaurelius.titan.core.Cardinality.SINGLE
-
-import org.cgnal.graphe.application.config.{ CrossSellApplicationConfigReader, CrossSellApplicationConfig }
+import org.cgnal.graphe.application.config.{ ExampleApplicationConfigReader, ExampleApplicationConfig }
 import org.cgnal.graphe.arrows.DomainArrows._
 import org.cgnal.graphe.domain.{ Item, CrossSellItems }
-import org.cgnal.graphe.tinkerpop.{ EnrichedSparkTinkerGraph, EnrichedTinkerSparkContext }
-import org.cgnal.graphe.tinkerpop.graph.NativeTinkerGraphProvider
-import org.cgnal.graphe.tinkerpop.titan.{ TitanGraphProvider, EnrichedTitanManagement }
+import org.cgnal.graphe.{ GraphEGraph, GraphESparkContext }
+import org.cgnal.graphe.tinkerpop.graph.TinkerGraphProvider
+import org.cgnal.graphe.tinkerpop.titan.TitanGraphProvider
+import org.cgnal.graphe.application.Providers.emptyGraphProvider
 
-sealed class CrossSellApplication(protected val sparkContext: SparkContext,
-                                  val config: CrossSellApplicationConfig) extends Application with SparkContextInstance {
+sealed class GraphSONApplication(protected val sparkContext: SparkContext,
+                                 val config: ExampleApplicationConfig) extends Application with SparkContextInstance {
 
   private def loadData() = Try {
     sparkContext.textFile(config.inputFileLocation).collect {
@@ -42,25 +38,14 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
     }.persist("Edges")
   }
 
-  private def createTitanSchema() = Try {
-    TitanGraphProvider.withGraphManagement { m =>
-      m.createVertexLabel("Item") { _.partition() }
-
-      m.createEdgeLabel("CrossSellItems") { _.multiplicity(MULTI) }
-
-      m.createPropertyKey[JavaInt]("productId")   { _.cardinality(SINGLE) }
-      m.createPropertyKey[JavaInt]("crossSellId") { _.cardinality(SINGLE) }
-    }
-  }
-
   private def graphX(vertices: RDD[(VertexId, Item)], edges: RDD[Edge[CrossSellItems]]) = Try { Graph(vertices, edges) }
 
-  private def loadGraph()(implicit provider: NativeTinkerGraphProvider) = Try {
-    sparkContext.loadNative[Item, CrossSellItems]
+  private def loadGraph()(implicit provider: TinkerGraphProvider) = Try {
+    sparkContext.load[Item, CrossSellItems]("output-data").asGraphSON
   }
 
-  private def saveGraph(graph: Graph[Item, CrossSellItems])(implicit provider: NativeTinkerGraphProvider) = Try {
-    graph.saveNativeGraph(false)
+  private def saveGraph(graph: Graph[Item, CrossSellItems])(implicit provider: TinkerGraphProvider) = Try {
+    graph.save("output-data").asGraphSON
   }
 
   private def save() = for {
@@ -69,7 +54,6 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
     edges    <- timed("Generting Edges")     { loadEdges(data)     }
     _        <- timed("Showing Vertices")    { show(vertices)      }
     graph    <- graphX(vertices, edges)
-    _        <- timed("Generating Schema")   { createTitanSchema() }
     _        <- timed("Saving Graph")        { saveGraph(graph)    }
   } yield ()
 
@@ -98,10 +82,10 @@ sealed class CrossSellApplication(protected val sparkContext: SparkContext,
 
 }
 
-object CrossSellApplication extends SparkContextProvider {
+object GraphSONApplication extends SparkContextProvider {
 
-  def create(args: Seq[String]) = CrossSellApplicationConfigReader.withConfig(args) { conf =>
-    withSparkContext("CrossSell", conf) { sparkContext => new CrossSellApplication(sparkContext, conf) }
+  def create(args: Seq[String]) = ExampleApplicationConfigReader.withConfig(args) { conf =>
+    withSparkContext("GraphSON", conf) { sparkContext => new GraphSONApplication(sparkContext, conf) }
   }
 
 }

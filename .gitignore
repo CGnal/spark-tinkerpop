@@ -5,6 +5,7 @@
 .settings
 .DS_STORE
 test-data/
+output-data/
 target
 project/project
 project/target

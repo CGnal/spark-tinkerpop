@@ -4,14 +4,14 @@ import org.rogach.scallop.Scallop
 
 import org.cgnal.graphe.application.EnrichedScallop
 
-case class CrossSellApplicationConfig(inputFileLocation: String,
+case class ExampleApplicationConfig(inputFileLocation: String,
                                       libDir: String,
                                       hadoopDir: String,
                                       tearDown: Boolean,
                                       sparkConfig: SparkApplicationConfig,
                                       securityConfig: SecurityConfig) extends ApplicationConfig
 
-object CrossSellApplicationConfigReader extends ScallopConfigReader[CrossSellApplicationConfig] {
+object ExampleApplicationConfigReader extends ScallopConfigReader[ExampleApplicationConfig] {
 
   def scallopts(scallop: Scallop): Scallop =
   { SparkApplicationConfigReader.scallopts _ } andThen
@@ -22,7 +22,7 @@ object CrossSellApplicationConfigReader extends ScallopConfigReader[CrossSellApp
      .toggle     (name = "tear-down", short = 'x', descrYes = "tears down the graph and deletes its contents", default = default(false))
   } apply scallop
 
-  protected def consumeScallop(scallop: Scallop): CrossSellApplicationConfig = CrossSellApplicationConfig(
+  protected def consumeScallop(scallop: Scallop): ExampleApplicationConfig = ExampleApplicationConfig(
     scallop.mandatory[String]("input"),
     scallop[String]("lib-dir"),
     scallop.mandatory[String]("hadoop"),
