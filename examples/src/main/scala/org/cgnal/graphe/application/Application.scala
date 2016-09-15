@@ -60,18 +60,10 @@ trait Application { this: SparkContextInstance =>
   protected def run(): Try[Unit]
 
   /**
-   * Secures the application using security information defined in `config`.
-   */
-  final def secure(): Try[Unit] =  config.securityConfig match {
-    case KerberosConfig(user, keytabLocation) => Try { UserGroupInformation.loginUserFromKeytab(user, keytabLocation) }
-    case NoSecurityConfig                     => Success { log.info("Skipping security: no information detected") }
-  }
-
-  /**
    * Starts the application by first trying to secure the application and then by calling `run()`.
    */
   final def start() = for {
-    _ <- secure()
+    _ <- Try { log.info(s"Running application [${if (config.isSecured) "in secured mode" else "in non-secured mode"}]") }
     _ <- run()
   } yield ()
 

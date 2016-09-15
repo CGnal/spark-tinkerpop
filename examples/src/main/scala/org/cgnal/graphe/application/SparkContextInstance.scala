@@ -1,10 +1,12 @@
 package org.cgnal.graphe.application
 
-import scala.util.Try
+import org.apache.hadoop.security.UserGroupInformation
+
+import scala.util.{Success, Try}
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
-import org.cgnal.graphe.application.config.ApplicationConfig
+import org.cgnal.graphe.application.config.{NoSecurityConfig, KerberosConfig, ApplicationConfig}
 
 trait SparkContextInstance {
 
@@ -34,9 +36,19 @@ trait SparkContextProvider {
     jarList  <- config.libDir.asPathList
   } yield new SparkConf().setJars { classJar :: jarList }
 
-  private def makeSparkConf(config: ApplicationConfig): Try[SparkConf] =
+  private def makeSparkConf(config: ApplicationConfig): Try[SparkConf] = {
+    secure(config)
     if (config.isStandalone) makeStandaloneSparkConf(config)
     else makeSparkSubmitSparkConf(config)
+  }
+
+  /**
+   * Secures the application using security information defined in `config`.
+   */
+  private def secure(config: ApplicationConfig): Try[Unit] = config.securityConfig match {
+    case KerberosConfig(user, keytabLocation) => Try { UserGroupInformation.loginUserFromKeytab(user, keytabLocation) }
+    case NoSecurityConfig                     => Success { }
+  }
 
   final protected def sparkConf(name: String, config: ApplicationConfig) = makeSparkConf(config).map { _.setAppName(name) }
 

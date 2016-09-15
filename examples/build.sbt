@@ -1,3 +1,5 @@
+import scala.util.Properties
+
 import sbt._
 
 import sbtassembly.MergeStrategy
@@ -15,9 +17,11 @@ version := applicationVersion
 
 scalaVersion := "2.10.5"
 
+javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+
 def assemblyName = "spark-tinkerpop-examples"
 
-def isLibrary = false
+def isLibrary = Properties.propOrNone("build.yarn").map { _ => true }.isDefined
 
 def here = file(".")
 def assemblyDir = file("assembly")
@@ -27,6 +31,17 @@ def jarName(scalaBinary: String, jarVersion: String) = s"graph_$scalaBinary-$jar
 
 def thinJar(scalaBinary: String, jarVersion: String) = file(s"${sys.props("user.dir")}/target/scala-$scalaBinary/${jarName(scalaBinary, jarVersion)}")
 def fatJar(scalaBinary: String, jarVersion: String)  = file(s"${sys.props("user.dir")}/assembly/target/scala-$scalaBinary/$assemblyName-$jarVersion.jar")
+
+def titanExcludes(moduleId: ModuleID) = moduleId
+  .exclude("org.apache.hadoop"      , "hadoop-client")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-client")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-api")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-common")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-server-common")
+  .exclude("org.apache.tinkerpop"   , "gremlin-groovy")
+  .exclude("com.thinkaurelius.titan", "titan-cassandra")
+  .exclude("com.thinkaurelius.titan", "titan-es")
+  .exclude("org.apache.tinkerpop"   , "spark-gremlin")
 
 def tinkerpopExcludes(moduleId: ModuleID) = moduleId
   .exclude("org.apache.hadoop"   , "hadoop-client")
@@ -62,7 +77,10 @@ def assemblyResolutionStrategy = assemblyMergeStrategy in assembly <<= (assembly
 
 def assemblyNoCache            = assemblyOption in assembly := (assemblyOption in assembly).value.copy(cacheUnzip = false)
 
-def assemblyJar                = assemblyJarName in assembly := s"$assemblyName-$applicationVersion.jar"
+def assemblyJar                = assemblyJarName in assembly := {
+  streams.value.log.info { s"Loading project dependencies for [${if (isLibrary) "yarn" else "local"}]" }
+  s"$assemblyName-$applicationVersion.jar"
+}
 
 def assemblyStrategy(currentStrategy: String => MergeStrategy): String => MergeStrategy = {
   case s if s endsWith "spark/unused/UnusedStubClass.class" => MergeStrategy.rename
@@ -70,6 +88,12 @@ def assemblyStrategy(currentStrategy: String => MergeStrategy): String => MergeS
   case other                                                => MergeStrategy.first
 }
 
+// Universal plugin
+def universalMappings(mappings: Seq[(File, String)])(orgExclude: String, nameExclude: String, versionExclude: String) = mappings.filterNot {
+  case (_, n) => n endsWith s"$orgExclude.$nameExclude-$versionExclude.jar"
+}
+
+// Versions
 def coreVersion       = "1.0-SNAPSHOT"
 def scallopVersion    = "2.0.1"
 def scalazVersion     = "7.1.1"
@@ -108,13 +132,13 @@ libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-co
 
 libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-server"   % hbaseVersion   % mainScope withSources() }
 
-libraryDependencies += "com.thinkaurelius.titan" % "titan-core"   % titanVersion % mainScope
+libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-core"   % titanVersion % "compile" }
 
-libraryDependencies += "com.thinkaurelius.titan" % "titan-hbase"  % titanVersion % mainScope
+libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-hbase"  % titanVersion % "compile" }
 
-libraryDependencies += "com.thinkaurelius.titan" % "titan-hadoop" % titanVersion % mainScope
+libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-hadoop" % titanVersion % "compile" }
 
-libraryDependencies += "org.cgnal"        %% "spark-tinkerpop"    % coreVersion  % mainScope
+libraryDependencies += "org.cgnal"        %% "spark-tinkerpop"    % coreVersion  % "compile"
 
 libraryDependencies += "org.rogach"       %% "scallop"       % scallopVersion      % "compile" withSources()
 
@@ -137,3 +161,5 @@ autoAPIMappings := true
 testOptions in Test += Tests.Filter { _ endsWith "Spec" }
 
 unmanagedBase := baseDirectory.value / "libext"
+
+mappings in Universal := universalMappings({ mappings in Universal }.value)(organization.value, name.value, version.value) :+ named(thinJar(scalaBinaryVersion.value, version.value), "")

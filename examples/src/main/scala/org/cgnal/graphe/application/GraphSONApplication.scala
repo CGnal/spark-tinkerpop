@@ -2,6 +2,8 @@ package org.cgnal.graphe.application
 
 import scala.util.{ Try, Success, Failure }
 
+import org.apache.hadoop.fs.{ FileSystem, Path }
+
 import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx._
@@ -11,11 +13,13 @@ import org.cgnal.graphe.arrows.DomainArrows._
 import org.cgnal.graphe.domain.{ Item, CrossSellItems }
 import org.cgnal.graphe.{ GraphEGraph, GraphESparkContext }
 import org.cgnal.graphe.tinkerpop.graph.TinkerGraphProvider
-import org.cgnal.graphe.tinkerpop.titan.TitanGraphProvider
 import org.cgnal.graphe.application.Providers.emptyGraphProvider
 
 sealed class GraphSONApplication(protected val sparkContext: SparkContext,
                                  val config: ExampleApplicationConfig) extends Application with SparkContextInstance {
+
+  private val outputDir  = "output-data"
+  private val outputPath = new Path(outputDir)
 
   private def loadData() = Try {
     sparkContext.textFile(config.inputFileLocation).collect {
@@ -41,11 +45,11 @@ sealed class GraphSONApplication(protected val sparkContext: SparkContext,
   private def graphX(vertices: RDD[(VertexId, Item)], edges: RDD[Edge[CrossSellItems]]) = Try { Graph(vertices, edges) }
 
   private def loadGraph()(implicit provider: TinkerGraphProvider) = Try {
-    sparkContext.load[Item, CrossSellItems]("output-data").asGraphSON
+    sparkContext.load[Item, CrossSellItems](outputDir).asGraphSON
   }
 
   private def saveGraph(graph: Graph[Item, CrossSellItems])(implicit provider: TinkerGraphProvider) = Try {
-    graph.save("output-data").asGraphSON
+    graph.save(outputDir).asGraphSON
   }
 
   private def save() = for {
@@ -64,10 +68,7 @@ sealed class GraphSONApplication(protected val sparkContext: SparkContext,
   } yield ()
 
   private def tearDown() = if (config.tearDown) {
-    TitanGraphProvider.clearGraph() match {
-      case Success(_) => log.info("Instance successfuly torn down")
-      case Failure(e) => log.error("Instance tear-down failed", e)
-    }
+    FileSystem.get { sparkContext.hadoopConfiguration }.delete(outputPath, true)
   }
 
   private def runBody() = for {

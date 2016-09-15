@@ -12,6 +12,8 @@ version := applicationVersion
 
 scalaVersion := "2.10.5"
 
+javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
+
 def isLibrary = true
 
 def here = file(".")

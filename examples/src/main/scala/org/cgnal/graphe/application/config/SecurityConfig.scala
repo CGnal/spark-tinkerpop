@@ -10,7 +10,7 @@ case object NoSecurityConfig extends SecurityConfig
 
 object SecurityConfig {
 
-  def fromString(arg: String): SecurityConfig = arg.split("@") match {
+  def fromString(arg: String): SecurityConfig = arg.split(":") match {
     case Array(user, keytabLocation) => KerberosConfig(user, keytabLocation)
     case _                           => throw new IllegalArgumentException(s"Invalid security setting [$arg] -- must be [user]@[keytab-location]")
   }

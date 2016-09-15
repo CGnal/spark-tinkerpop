@@ -55,7 +55,7 @@ trait HadoopGraphLoader { this: NativeTinkerGraphProvider with Serializable =>
   protected def nativeInputFormat: Class[_ <: NativeGraphInputFormat]
 
   def loadNative(sparkContext: SparkContext): RDD[TinkerVertex] = sparkContext.newAPIHadoopRDD[NullWritable, VertexWritable, NativeGraphInputFormat](
-    sparkContext.hadoopConfiguration.mergeWith { tinkerConfig },
+    sparkContext.hadoopConfiguration.withCredentials.mergeWith { tinkerConfig },
     nativeInputFormat.asInstanceOf[Class[NativeGraphInputFormat]],
     classOf[NullWritable],
     classOf[VertexWritable]

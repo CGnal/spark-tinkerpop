@@ -9,8 +9,11 @@ import org.apache.commons.configuration.{ Configuration => TinkerConfig }
 
 import org.apache.hadoop.fs.{ Path, FileSystem }
 import org.apache.hadoop.conf.{ Configuration => HadoopConfig }
+import org.apache.hadoop.mapred.JobConf
+import org.apache.hadoop.mapreduce.Job
 
 import org.apache.spark.SparkContext
+import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.rdd.RDD
 import org.apache.spark.graphx.{ EdgeTriplet => SparkEdgeTriplet, TripletFields, Graph }
 
@@ -119,6 +122,18 @@ package object graphe {
     def mergeWith(tinkerConfig: TinkerConfig) = tinkerConfig.getKeys.asScala.foldLeft(copy) { (hadoop, next) =>
       hadoop.set(next, tinkerConfig.getProperty(next).toString)
       hadoop
+    }
+
+    def withCredentials = {
+      val jobConf = asJobConf
+      val job = Job.getInstance(jobConf)
+      SparkHadoopUtil.get.addCredentials { jobConf }
+      jobConf
+    }
+
+    def asJobConf: JobConf  = hadoopConfig match {
+      case jobConf: JobConf => jobConf
+      case _                => new JobConf(hadoopConfig)
     }
 
   }

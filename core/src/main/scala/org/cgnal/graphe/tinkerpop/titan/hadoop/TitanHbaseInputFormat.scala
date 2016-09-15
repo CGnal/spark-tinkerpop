@@ -1,36 +1,43 @@
 package org.cgnal.graphe.tinkerpop.titan.hadoop
 
-import scala.collection.convert.decorateAsScala._
-
-import org.apache.hadoop.conf.{ Configuration, Configurable }
-import org.apache.hadoop.hbase.client.Scan
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat
-import org.apache.hadoop.hbase.protobuf.ProtobufUtil
-import org.apache.hadoop.hbase.util.{ Base64, Bytes }
-import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, JobContext }
-
 import com.thinkaurelius.titan.diskstorage.hbase.HBaseStoreManager
 import com.thinkaurelius.titan.hadoop.formats.hbase.HBaseBinaryRecordReader
 
+import org.apache.hadoop.conf.{ Configuration, Configurable }
+import org.apache.hadoop.hbase.HBaseConfiguration
+import org.apache.hadoop.hbase.client.Scan
+import org.apache.hadoop.hbase.mapred.TableMapReduceUtil
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat
+import org.apache.hadoop.hbase.protobuf.ProtobufUtil
+import org.apache.hadoop.hbase.util.{ Base64, Bytes }
+import org.apache.hadoop.mapred.JobConf
+import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, JobContext }
+import org.apache.hadoop.security.UserGroupInformation
+
 import org.cgnal.graphe.tinkerpop.NativeGraphInputFormat
+import org.cgnal.graphe.EnrichedHadoopConfig
 
 /**
  * `NativeInputFormat` implementation for Titan's hbase storage backend.
  */
 class TitanHbaseInputFormat extends NativeGraphInputFormat with Configurable {
 
-  private var config = new Configuration
+  private var config: JobConf = _
 
   private lazy val tableInputFormat = new TableInputFormat
 
   def getConf = config
-  def setConf(conf: Configuration) = {
-    config = conf
+  def setConf(conf: Configuration) = synchronized {
+    config = HBaseConfiguration.create(conf).asJobConf
+
     conf.set       (hbaseMapredInputTableKey   , titanHbaseTable)
     conf.setStrings(hbaseZookeeperQuorumKey    , titanZookeeperQuorum: _*)
     conf.setInt    (hbaseZookeeperClientPortKey, titanZookeeperClientPort)
     conf.set       (hbaseMapredScanKey         , titanHbaseScanString)
-    tableInputFormat.setConf(conf)
+
+    TableMapReduceUtil.initCredentials(config)
+    config.getCredentials.addAll { UserGroupInformation.getCurrentUser.getCredentials }
+    tableInputFormat.setConf(config)
   }
 
   private def titanFullEdgeStoreFamily = getConf.get       (titanEdgeStoreNameKey      , titanEdgeStoreNameValue)
@@ -49,14 +56,16 @@ class TitanHbaseInputFormat extends NativeGraphInputFormat with Configurable {
     f { getConf }
   }
 
-  private def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = new HBaseBinaryRecordReader(
+  private def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = withUpdatedConf(taskContext.getConfiguration) { _ =>
+    new HBaseBinaryRecordReader(
     tableInputFormat.createRecordReader(inputSplit, taskContext),
     Bytes.toBytes(titanEdgeStorageFamily))
-
-  def getSplits(context: JobContext) = tableInputFormat.getSplits(context)
-
-  def createRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = withUpdatedConf(taskContext.getConfiguration) {
-    new TitanHbaseRecordReader(createHbaseRecordReader(inputSplit, taskContext), _)
   }
+
+  def getSplits(context: JobContext) = withUpdatedConf(context.getConfiguration) { _ =>
+    tableInputFormat.getSplits(context)
+  }
+
+  def createRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = new TitanHbaseRecordReader(createHbaseRecordReader(inputSplit, taskContext), getConf)
 
 }
