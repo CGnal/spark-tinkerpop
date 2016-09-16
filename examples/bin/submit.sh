@@ -34,6 +34,9 @@ shift
 done
 
 ### Configuration ###
+APP_NAME_VALUE=${APP_NAME_VALUE:-titan}
+APP_LIB_VALUE=${APP_LIB_VALUE:-libext}
+APP_DATA_VALUE=${APP_DATA_VALUE:-data/Amazon.0302.small.txt}
 
 # Application Config
 APP_MASTER_VALUE=yarn-client
