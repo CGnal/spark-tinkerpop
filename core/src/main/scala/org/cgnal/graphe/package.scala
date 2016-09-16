@@ -124,6 +124,11 @@ package object graphe {
       hadoop
     }
 
+    /**
+     * Uses Spark to initialize credentials, as loaded by the current `SparkContext`; this means that `SPARK_YARN_MODE`
+     * must be set as either a JVM property or an environment variable.
+     * @return the given configuration with updated credentials as an instance of `JobConf`.
+     */
     def withCredentials = {
       val jobConf = asJobConf
       val job = Job.getInstance(jobConf)
@@ -131,6 +136,11 @@ package object graphe {
       jobConf
     }
 
+    /**
+     * Converts the supplied configuration instance as a `JobConf`, which exposes different functionality. Note that if
+     * the given `Configuration` instance is already of type `JobConf`, then this function will only apply casting.
+     * @return the unmodified input configuration with type `JobConf`.
+     */
     def asJobConf: JobConf  = hadoopConfig match {
       case jobConf: JobConf => jobConf
       case _                => new JobConf(hadoopConfig)
