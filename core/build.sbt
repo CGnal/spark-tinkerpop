@@ -25,6 +25,20 @@ def tinkerpopExcludes(moduleId: ModuleID) = moduleId
   .exclude("org.apache.hadoop"   , "hadoop-yarn-common")
   .exclude("org.apache.hadoop"   , "hadoop-yarn-server-common")
   .exclude("org.apache.tinkerpop", "gremlin-groovy")
+  .exclude("org.apache.tinkerpop", "tinkergraph-gremlin")
+
+def titanExcludes(moduleId: ModuleID) = moduleId
+  .exclude("org.apache.hadoop"      , "hadoop-client")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-client")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-api")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-common")
+  .exclude("org.apache.hadoop"      , "hadoop-yarn-server-common")
+  .exclude("org.apache.tinkerpop"   , "gremlin-groovy")
+  .exclude("com.thinkaurelius.titan", "titan-cassandra")
+  .exclude("com.thinkaurelius.titan", "titan-es")
+  .exclude("org.apache.tinkerpop"   , "spark-gremlin")
+  .exclude("org.apache.tinkerpop"   , "gremlin-groovy")
+  .exclude("org.apache.tinkerpop"   , "tinkergraph-gremlin")
 
 def sparkExcludes(moduleId: ModuleID) = moduleId
   .exclude("org.apache.hadoop", "hadoop-client")
@@ -79,11 +93,15 @@ libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-co
 
 libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-server"   % hbaseVersion   % mainScope withSources() }
 
-libraryDependencies += "com.thinkaurelius.titan" % "titan-core"   % titanVersion % mainScope
+libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-core"   % titanVersion % mainScope }
 
-libraryDependencies += "com.thinkaurelius.titan" % "titan-hbase"  % titanVersion % mainScope
+libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-hbase"  % titanVersion % mainScope }
 
-libraryDependencies += "com.thinkaurelius.titan" % "titan-hadoop" % titanVersion % mainScope
+libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-hadoop" % titanVersion % mainScope }
+
+libraryDependencies += "org.apache.tinkerpop" % "gremlin-groovy"      % gremlinVersion % "compile" withSources()
+
+libraryDependencies += "org.apache.tinkerpop" % "tinkergraph-gremlin" % gremlinVersion % "compile" withSources()
 
 libraryDependencies += "org.scalaz"       %% "scalaz-core"   % scalazVersion       % "compile" withSources()
 

@@ -42,6 +42,8 @@ def titanExcludes(moduleId: ModuleID) = moduleId
   .exclude("com.thinkaurelius.titan", "titan-cassandra")
   .exclude("com.thinkaurelius.titan", "titan-es")
   .exclude("org.apache.tinkerpop"   , "spark-gremlin")
+  .exclude("org.apache.tinkerpop"   , "gremlin-groovy")
+  .exclude("org.apache.tinkerpop"   , "tinkergraph-gremlin")
 
 def tinkerpopExcludes(moduleId: ModuleID) = moduleId
   .exclude("org.apache.hadoop"   , "hadoop-client")
@@ -50,6 +52,7 @@ def tinkerpopExcludes(moduleId: ModuleID) = moduleId
   .exclude("org.apache.hadoop"   , "hadoop-yarn-common")
   .exclude("org.apache.hadoop"   , "hadoop-yarn-server-common")
   .exclude("org.apache.tinkerpop", "gremlin-groovy")
+  .exclude("org.apache.tinkerpop", "tinkergraph-gremlin")
 
 def sparkExcludes(moduleId: ModuleID) = moduleId
   .exclude("org.apache.hadoop", "hadoop-client")
@@ -83,8 +86,8 @@ def assemblyJar                = assemblyJarName in assembly := {
 }
 
 def assemblyStrategy(currentStrategy: String => MergeStrategy): String => MergeStrategy = {
-  case s if s endsWith "spark/unused/UnusedStubClass.class" => MergeStrategy.rename
   case s if s contains "META-INF"                           => MergeStrategy.discard
+  case s if s endsWith "spark/unused/UnusedStubClass.class" => MergeStrategy.rename
   case other                                                => MergeStrategy.first
 }
 
@@ -138,17 +141,21 @@ libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-hbase"
 
 libraryDependencies += titanExcludes { "com.thinkaurelius.titan" % "titan-hadoop" % titanVersion % "compile" }
 
-libraryDependencies += "org.cgnal"        %% "spark-tinkerpop"    % coreVersion  % "compile"
+libraryDependencies += "org.apache.tinkerpop" % "gremlin-groovy"      % gremlinVersion % "compile" withSources()
 
-libraryDependencies += "org.rogach"       %% "scallop"       % scallopVersion      % "compile" withSources()
+libraryDependencies += "org.apache.tinkerpop" % "tinkergraph-gremlin" % gremlinVersion % "compile" withSources()
 
-libraryDependencies += "org.scalaz"       %% "scalaz-core"   % scalazVersion       % "compile" withSources()
+libraryDependencies += "org.cgnal"           %% "spark-tinkerpop" % coreVersion       % "compile"
 
-libraryDependencies += "junit"             % "junit"         % jUnitVersion        % "test"
+libraryDependencies += "org.rogach"          %% "scallop"         % scallopVersion    % "compile" withSources()
 
-libraryDependencies += "org.scalatest"    %% "scalatest"     % scalaTestVersion    % "test"
+libraryDependencies += "org.scalaz"          %% "scalaz-core"     % scalazVersion     % "compile" withSources()
 
-libraryDependencies += "org.scalacheck"   %% "scalacheck"    % scalaCheckVersion   % "test"
+libraryDependencies += "junit"                % "junit"           % jUnitVersion      % "test"
+
+libraryDependencies += "org.scalatest"       %% "scalatest"       % scalaTestVersion  % "test"
+
+libraryDependencies += "org.scalacheck"      %% "scalacheck"      % scalaCheckVersion % "test"
 
 parallelExecution in Test := false
 

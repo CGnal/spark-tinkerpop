@@ -1,10 +1,12 @@
 package org.cgnal.graphe.tinkerpop.titan
 
-import com.thinkaurelius.titan.diskstorage.configuration.ConfigElement
+import com.thinkaurelius.titan.diskstorage.configuration.ConfigOption.{ Type => ConfigType }
+import com.thinkaurelius.titan.diskstorage.configuration.{ ConfigOption, ConfigElement }
 import com.thinkaurelius.titan.diskstorage.hbase.HBaseStoreManager
 import com.thinkaurelius.titan.diskstorage.StandardStoreManager
 import com.thinkaurelius.titan.hadoop.config.TitanHadoopConfiguration
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration
+import org.cgnal.graphe.tinkerpop.config.TitanCGnalConfig
 
 /**
  * Provides values to easily access Titan configuration settings, along with default values.
@@ -16,10 +18,15 @@ package object hadoop {
   val titanEdgeStoreNameKey   = ConfigElement.getPath(TitanHadoopConfiguration.COLUMN_FAMILY_NAME)
   val titanEdgeStoreNameValue = TitanHadoopConfiguration.COLUMN_FAMILY_NAME.getDefaultValue
 
-  // key   = titanmr.bulkload.
-  // value = edgestore
+  // key   = titanmr.ioformat.filter-partitioned-vertices
+  // value = true
   val titanBulkPartitioningKey   = ConfigElement.getPath(TitanHadoopConfiguration.FILTER_PARTITIONED_VERTICES)
   val titanBulkPartitioningValue = true
+
+  // key   = titanmr.ioformat.vertex-query
+  // value = v.query()
+  val titanVertexQueryKey   = ConfigElement.getPath(TitanCGnalConfig.VERTEX_QUERY)
+  val titanVertexQueryValue = TitanCGnalConfig.VERTEX_QUERY.getDefaultValue
 
   // key   = storage.hbase.short-cf-names
   // value = true

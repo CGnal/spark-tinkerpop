@@ -82,7 +82,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
 
   private def tearDown() = if (config.tearDown) {
     TitanGraphProvider.clearGraph() match {
-      case Success(_) => log.info("Instance successfuly torn down")
+      case Success(_) => log.info("Instance successfully torn down")
       case Failure(e) => log.error("Instance tear-down failed", e)
     }
   }

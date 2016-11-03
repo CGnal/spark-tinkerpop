@@ -198,9 +198,10 @@ Besides the graph configuration needed by the underlying graph engine, the appli
 |---------------------------|---------------------------------------------------------------------------------------------------------------|:-------:|
 | application.back-off-time | The approximate amount of time in milliseconds to wait before re-attempting to commit the current transaction | 1500    |
 | application.retries       | The amount of times to retry the commit, backing off each time before declaring failure and rolling back      | 5       |
-| application.batch-size 	| The size of each batch to commit when using the batching functions                                            | 100     |
+| application.batch-size 	  | The size of each batch to commit when using the batching functions                                            | 100     |
+| ioformat.vertex-query     | Gremlin groovy-style query used when loading data using a hadoop `InputFormat`; more on this below            |         |
 
-Note that these configurations are simply defaults and can be overridden by passing the desired overrides when calling any `attemp` method on the relevant [`TransactionWrapper`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/TransactionWrapper.scala) implementation.
+Note that these configurations are simply defaults and can be overridden by passing the desired overrides when calling any `attempt` method on the relevant [`TransactionWrapper`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/TransactionWrapper.scala) implementation.
 
 Native Interfaces
 -------
@@ -208,3 +209,14 @@ Native Interfaces
 Spark-Tinkerpop offers the possibility of storing and retrieving graph data to and from external graph databases such as Titan, Neo4J and OrientDB. Without discounting the capabilities of commercial graph engines, even when playing on a level playing field in terms of performance, Spark offers some nice additional advantages, such as the possibility of running various statistical and machine learning algorithms on the graph data, or even integrating with data that already exists in a warehouse outside the graph-computing platform.
 
 The integration occurs in a two-step conversion process that leverages the Tinkerpop compliant APIs which serve as an intermediate compatibility format. The integration point is the [`NativeTinkerGraphProvider`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/NativeTinkerGraphProvider.scala#L18) trait that extends `TinkerGraphProvider` to add native loading and saving methods. Note that for simplicity, in Hadoop clusters, one can simply mix-in the [`HadoopGraphLoader`](core/src/main/scala/org/cgnal/graphe/tinkerpop/graph/NativeTinkerGraphProvider.scala#L50) trait to automatically inherit an implementation for `loadNative` that automatically loads data into Spark using a provided implementation of a Hadoop `InputFormat`
+
+Vertex-Query
+-------
+
+When loading data with native interfaces which use custom hadoop `InputFormat` and `RecordReader`, a query can be passed through configuration that filters loaded vertices, or their edges. Currently only the Titan graph implementation supports this, which uses a gremlin-groovy script engine to parse and compile the `ioformat.vertex-query` configuration string setting.
+
+The value can be any query that returns a `GraphTraversal[Vertex, Vertex]` or `GraphTraversal[Edge, Edge]`, which would use the `v` or `e` bindings; more concretely: `v.has("productId")` would read only vertices that have the `productId` property set, filtering out those that don't.
+
+On the other hand, a query like `e.has("crossSellId")` would all vertices, filtering out all the edges that don't match the query.
+
+Note that the traversal which results from the parsing and compilation is evaluated against each vertex that is read by the record reader, but the script compilation is performed (lazily) *only once*. Also, the query is only compiled and evaluated if and only if the configuration setting is defined and is not empty or null.

@@ -3,6 +3,7 @@ package org.cgnal.graphe.tinkerpop.titan.hadoop
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, RecordReader }
+
 import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex }
 
@@ -11,19 +12,33 @@ import com.thinkaurelius.titan.hadoop.formats.util.TitanVertexDeserializer
 import com.thinkaurelius.titan.hadoop.formats.util.input.TitanHadoopSetup
 import com.thinkaurelius.titan.hadoop.formats.util.input.current.TitanHadoopSetupImpl
 
-class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Configuration) extends RecordReader[NullWritable, VertexWritable] {
+import org.cgnal.graphe.tinkerpop.graph.query.TinkerpopQueryParsing
+
+class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Configuration)
+  extends RecordReader[NullWritable, VertexWritable]
+  with TinkerpopQueryParsing {
 
   private var vertexWritable: VertexWritable = new VertexWritable()
 
+  private lazy val groovyQueryString = config.get(titanVertexQueryKey)
+  private lazy val tinkerpopQuery    = compileScript(groovyQueryString)
+
   private lazy val titanHadoopSetup: TitanHadoopSetup = new TitanHadoopSetupImpl(config)
   private lazy val vertexReader = new TitanVertexDeserializer(titanHadoopSetup)
+
+  private lazy val usesScript = groovyQueryString match {
+    case null | "" | "none" => false
+    case _                  => true
+  }
+
+  private def evalQuery(vertex: TinkerVertex) = if (usesScript) evalTraversal(vertex, tinkerpopQuery).result else Some(vertex)
 
   private def setCurrentValue(vertex: TinkerVertex) = {
     vertexWritable = new VertexWritable(vertex)
     true
   }
 
-  private def readKeyValue() = Option { vertexReader.readHadoopVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue) } match {
+  private def readKeyValue() = Option { vertexReader.readHadoopVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue) }.flatMap { evalQuery } match {
     case Some(tinkerVertex) => setCurrentValue(tinkerVertex)
     case None               => nextKeyValue()
   }
