@@ -14,7 +14,7 @@ import com.thinkaurelius.titan.graphdb.transaction.StandardTitanTx
 
 import org.cgnal.graphe.tinkerpop.graph.TransactionWrapper
 
-final class TitanTransactionWrapper[A <: TitanTransaction](@transient private val titanTransaction: A) extends TransactionWrapper with Serializable {
+final class TitanTransactionWrapper[A <: TitanTransaction](@transient private[titan] val titanTransaction: A) extends TransactionWrapper with Serializable {
 
   def commit(): Unit = withDebug("Committing transaction") { titanTransaction.commit() }
 

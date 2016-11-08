@@ -18,3 +18,4 @@ storage:
   port: 2181
 ioformat:
     filter-partitioned-vertices: true
+    vertex-query: v.has("productId")

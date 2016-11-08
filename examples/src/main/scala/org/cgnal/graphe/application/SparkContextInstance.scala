@@ -1,8 +1,8 @@
 package org.cgnal.graphe.application
 
-import org.apache.hadoop.security.UserGroupInformation
+import scala.util.{ Success, Try }
 
-import scala.util.{Success, Try}
+import org.apache.hadoop.security.UserGroupInformation
 
 import org.apache.spark.{ SparkConf, SparkContext }
 
