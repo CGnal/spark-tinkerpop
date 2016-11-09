@@ -2,8 +2,13 @@ package org.cgnal.graphe.tinkerpop.graph.query
 
 import javax.script.{ Bindings, SimpleBindings }
 
+import scala.collection.convert.decorateAsScala._
+import scala.reflect.ClassTag
+
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
-import org.apache.tinkerpop.gremlin.structure.{ Edge, Vertex }
+import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalStrategies
+import org.apache.tinkerpop.gremlin.process.traversal.{ TraversalStrategy, TraversalStrategies }
+import org.apache.tinkerpop.gremlin.structure.{ Edge, Vertex, Graph }
 import org.apache.tinkerpop.gremlin.structure.util.star.StarGraph
 
 import org.cgnal.graphe.tinkerpop.{ EnrichedGraphTraversal, EnrichedTinkerVertex }
@@ -57,5 +62,19 @@ trait TinkerpopQueryParsing extends QueryParsing[Vertex] with GroovyQueryParsing
    *         nothing
    */
   final protected def evalTraversal(element: Vertex, script: CompiledQuery): ScriptResult[Option[Vertex]] = eval(element, script).refine { processTraversal(element) }
+
+}
+
+trait TraversalOptimizations { this: TinkerpopQueryParsing =>
+
+  protected def newStrategies: Seq[TraversalStrategy[_]] = Seq.empty
+
+  final protected def basicStrategies = TraversalStrategies.GlobalCache.getStrategies(classOf[Graph]).toList.asScala
+
+  final protected def allStrategies = newStrategies ++ basicStrategies
+
+  final protected  def allTraversalStrategies = new DefaultTraversalStrategies().addStrategies(allStrategies: _*)
+
+  final protected def useOptimizations[B <: Graph](implicit B: ClassTag[B]) = TraversalStrategies.GlobalCache.registerStrategies(B.runtimeClass, allTraversalStrategies)
 
 }

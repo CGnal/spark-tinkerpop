@@ -5,18 +5,25 @@ import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, RecordReader }
 
 import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
+import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex }
 
 import com.thinkaurelius.titan.hadoop.formats.hbase.HBaseBinaryRecordReader
 import com.thinkaurelius.titan.hadoop.formats.util.TitanVertexDeserializer
 import com.thinkaurelius.titan.hadoop.formats.util.input.TitanHadoopSetup
 import com.thinkaurelius.titan.hadoop.formats.util.input.current.TitanHadoopSetupImpl
+import com.thinkaurelius.titan.graphdb.tinkerpop.optimize.AdjacentVertexFilterOptimizerStrategy
 
-import org.cgnal.graphe.tinkerpop.graph.query.TinkerpopQueryParsing
+import org.cgnal.graphe.tinkerpop.graph.query.{ TinkerpopQueryParsing, TraversalOptimizations }
 
 class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Configuration)
   extends RecordReader[NullWritable, VertexWritable]
-  with TinkerpopQueryParsing {
+  with TinkerpopQueryParsing
+  with TraversalOptimizations {
+
+  override protected def newStrategies = Seq(
+    AdjacentVertexFilterOptimizerStrategy.instance()
+  )
 
   private var vertexWritable: VertexWritable = new VertexWritable()
 
@@ -28,7 +35,7 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
 
   private lazy val usesScript = groovyQueryString match {
     case null | "" | "none" => false
-    case _                  => true
+    case _                  => useOptimizations[TinkerGraph]; true
   }
 
   private def evalQuery(vertex: TinkerVertex) = if (usesScript) evalTraversal(vertex, tinkerpopQuery).result else Some(vertex)
