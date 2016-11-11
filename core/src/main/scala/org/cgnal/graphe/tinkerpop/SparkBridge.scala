@@ -37,7 +37,7 @@ object SparkBridge {
    * @tparam A the edge type
    */
   def asSparkEdges[A](rdd: RDD[TinkerVertex])(implicit A: ClassTag[A], arrow: Arrows.TinkerEdgeArrowR[A]) = rdd.flatMap {
-    _.edges(Direction.OUT).asScala.map { Arrows.tinkerSparkEdgeArrowR.apR }
+    _.edges(Direction.IN).asScala.map { Arrows.tinkerSparkEdgeArrowR.apR }
   }
 
   /**
