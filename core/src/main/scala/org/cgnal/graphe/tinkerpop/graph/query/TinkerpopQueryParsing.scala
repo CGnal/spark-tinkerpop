@@ -75,6 +75,6 @@ trait TraversalOptimizations { this: TinkerpopQueryParsing =>
 
   final protected  def allTraversalStrategies = new DefaultTraversalStrategies().addStrategies(allStrategies: _*)
 
-  final protected def useOptimizations[B <: Graph](implicit B: ClassTag[B]) = TraversalStrategies.GlobalCache.registerStrategies(B.runtimeClass, allTraversalStrategies)
+  final protected def useOptimizations[B <: Graph](implicit B: ClassTag[B]) = TraversalStrategies.GlobalCache.registerStrategies(B.runtimeClass.asInstanceOf[Class[B]], allTraversalStrategies)
 
 }
