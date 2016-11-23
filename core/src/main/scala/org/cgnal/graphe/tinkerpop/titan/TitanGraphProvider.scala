@@ -49,25 +49,24 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
    * Saves edges '''and''' vertices.
    */
   private def saveEdges[A, B](rdd: RDD[TinkerpopEdges[A, B]])(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) =
-    withIdScaling(rdd) { scaler =>
       rdd.foreachPartition {
         TitanTransactionWrapper.batched(graph, _, defaultBatchSize, retryThreshold, retryDelay) { (batch, transaction) =>
           TitanTransactionWrapper.withIdManager(transaction) { idManager =>
             batch.foreach {
-              case tinkerpopEdge if tinkerpopEdge.outEdges.isEmpty => transaction.standardVertex(
+
+              case tinkerpopEdge if tinkerpopEdge.hasNoInEdges => transaction.createVertex(
                 tinkerpopEdge.vertex,
-                scaler(tinkerpopEdge.vertexId).toTitan(idManager)
+                tinkerpopEdge.vertexId.asTitanId.toTitan(idManager)
               ).enrich
-              case tinkerpopEdge                                   => tinkerpopEdge.outEdges.foreach { triplet =>
-                triplet.connect {
-                  transaction.standardVertex(triplet.srcAttr, scaler(triplet.srcId).toTitan(idManager)) ->
-                  transaction.standardVertex(triplet.dstAttr, scaler(triplet.dstId).toTitan(idManager))
+
+              case tinkerpopEdge =>
+                val vertex = transaction.createVertex(tinkerpopEdge.vertex, tinkerpopEdge.vertexId.asTitanId.toTitan(idManager)).enriched
+                tinkerpopEdge.inEdges.foreach { triplet =>
+                  triplet.connect { transaction.createVertex(triplet.srcAttr, triplet.srcId.asTitanId.toTitan(idManager)) -> vertex }
                 }
-              }
             }
           }
         }.get
-      }
     }
 
   /**

@@ -53,11 +53,13 @@ package object hadoop {
   val titanZookeeperClientPortKey   = ConfigElement.getPath(GraphDatabaseConfiguration.STORAGE_PORT)
   val titanZookeeperClientPortValue = 2181
 
+  val titanZookeeperTimeoutKey   = "application.zookeeper.timeout"
+  val titanZookeeperTimeoutValue = 10000
+
   val hbaseMapredInputTableKey    = "hbase.mapreduce.inputtable"
   val hbaseMapredScanKey          = "hbase.mapreduce.scan"
   val hbaseZookeeperQuorumKey     = "hbase.zookeeper.quorum"
   val hbaseZookeeperClientPortKey = "hbase.zookeeper.property.clientPort"
-
-
+  val hbaseZookeeperTimeout       = "ha.zookeeper.session-timeout.ms"
 
 }

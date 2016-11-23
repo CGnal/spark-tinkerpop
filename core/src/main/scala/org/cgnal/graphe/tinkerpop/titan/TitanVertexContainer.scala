@@ -22,4 +22,9 @@ private[titan] case class TitanVertexContainer[A](a: A, vertex: TitanVertex) {
     vertex.property(key, value, Seq.empty[AnyRef]: _*)
   }
 
+  def enriched(implicit arrow: Arrows.TinkerRawPropSetArrowF[A]) = {
+    enrich
+    this
+  }
+
 }

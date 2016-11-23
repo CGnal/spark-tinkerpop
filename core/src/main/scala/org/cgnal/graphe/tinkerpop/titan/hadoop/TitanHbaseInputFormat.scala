@@ -34,6 +34,7 @@ class TitanHbaseInputFormat extends NativeGraphInputFormat with Configurable {
     conf.setStrings(hbaseZookeeperQuorumKey    , titanZookeeperQuorum: _*)
     conf.setInt    (hbaseZookeeperClientPortKey, titanZookeeperClientPort)
     conf.set       (hbaseMapredScanKey         , titanHbaseScanString)
+    conf.setInt    (hbaseZookeeperTimeout      , titanZookeeperTimeout)
 
     TableMapReduceUtil.initCredentials(config)
     config.getCredentials.addAll { UserGroupInformation.getCurrentUser.getCredentials }
@@ -45,6 +46,7 @@ class TitanHbaseInputFormat extends NativeGraphInputFormat with Configurable {
   private def titanHbaseTable          = getConf.get       (titanHBaseTableKey         , titanHBaseTableValue)
   private def titanZookeeperClientPort = getConf.getInt    (titanZookeeperClientPortKey, titanZookeeperClientPortValue)
   private def titanZookeeperQuorum     = getConf.getStrings(titanZookeeperQuorumKey    , titanZookeeperQuorumValue: _*)
+  private def titanZookeeperTimeout    = getConf.getInt    (titanZookeeperTimeoutKey   , titanZookeeperTimeoutValue)
 
   private def titanEdgeStorageFamily   = if (titanShortenNames) HBaseStoreManager.shortenCfName { titanFullEdgeStoreFamily } else titanFullEdgeStoreFamily
 

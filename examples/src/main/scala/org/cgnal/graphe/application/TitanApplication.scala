@@ -2,6 +2,7 @@ package org.cgnal.graphe.application
 
 import java.lang.{ Integer => JavaInt }
 
+import scala.collection.convert.decorateAsScala._
 import scala.util.{ Try, Success, Failure }
 
 import org.apache.spark.rdd.RDD
@@ -45,7 +46,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
 
   private def createTitanSchema() = Try {
     TitanGraphProvider.withGraphManagement { m =>
-      m.createVertexLabel("Item") { _.partition() }
+      m.createVertexLabel("Item") { identity }
 
       m.createEdgeLabel("CrossSellItems") { _.multiplicity(MULTI) }
 
@@ -64,19 +65,38 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
     graph.saveNativeGraph(false)
   }
 
+  private def queryVertices(implicit provider: NativeTinkerGraphProvider) = Try {
+    val vertices = provider.withGraph { g => g.traversal().V().toList.asScala }
+    vertices.foreach { vertex =>
+      log.info { s"v: { id = [${vertex.id()}] label = [${vertex.label()}] props = [${vertex.properties().asScala.mkString(", ")}] }" }
+    }
+    log.info { s"Found [${vertices.size}] vertices" }
+  }
+
+  private def queryEdges(implicit provider: NativeTinkerGraphProvider) = Try {
+    val edges = provider.withGraph { g => g.traversal().E().toList.asScala }
+    edges.foreach { edge =>
+      log.info { s"e: { id = [${edge.id()}] label = [${edge.label()}] props = [${edge.properties().asScala.mkString(", ")}] }" }
+    }
+    log.info { s"Found [${edges.size}] edges" }
+  }
+
   private def save() = for {
     data     <- timed("Loading data")        { loadData()          }
     vertices <- timed("Generating Vertices") { loadVertices(data)  }
     edges    <- timed("Generting Edges")     { loadEdges(data)     }
     _        <- timed("Showing Vertices")    { show(vertices)      }
+    _        <- timed("Showing Edges")       { show(edges)         }
     graph    <- graphX(vertices, edges)
     _        <- timed("Generating Schema")   { createTitanSchema() }
     _        <- timed("Saving Graph")        { saveGraph(graph)    }
+    _        <- timed("Vertex Query")        { queryVertices       }
+    _        <- timed("Edge Query")          { queryEdges          }
   } yield ()
 
   private def load() = for {
-    graph <- timed("Loading graph")       { loadGraph() }
-    _     <- timed("Recovering Vertices") { show(graph.vertices.values) }
+    graph <- timed("Loading graph")       { loadGraph()                      }
+    _     <- timed("Recovering Vertices") { show(graph.vertices.values)      }
     _     <- timed("Recovering Edges")    { show(graph.edges.map { _.attr }) }
   } yield ()
 

@@ -20,8 +20,8 @@ import org.cgnal.graphe.tinkerpop.titan.TitanGraphProvider
 package object application {
 
   object Providers {
-    implicit def tinkerGraphProvider = TitanGraphProvider
-    implicit def emptyGraphProvider  = EmptyTinkerGraphProvider
+    implicit val tinkerGraphProvider = TitanGraphProvider
+    implicit val emptyGraphProvider  = EmptyTinkerGraphProvider
   }
 
   implicit class EnrichedRDD[A](rdd: RDD[A]) {

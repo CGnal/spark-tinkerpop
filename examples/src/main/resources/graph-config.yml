@@ -3,8 +3,15 @@ application:
   back-off-time: 1500
   retries: 5
   batch-size: 100
+  zookeeper:
+    timeout: 10000
 cluster:
-  max-partitions: 16
+  partition: true
+  max-partitions: 4
+ids:
+  flush: false
+graph:
+  set-vertex-id: true
 cache:
   db-cache: true
   db-cache-clean-wait: 20
@@ -14,7 +21,8 @@ storage:
   backend: hbase
   hbase:
     table: cross-sell-example
-  hostname: localhost
+    short-cf-names: false
+  hostname: 127.0.0.1
   port: 2181
 ioformat:
     filter-partitioned-vertices: true

@@ -42,6 +42,11 @@ trait SparkContextProvider {
     else makeSparkSubmitSparkConf(config)
   }
 
+  private def setCheckpoint(config: ApplicationConfig, sparkContext: SparkContext): SparkContext = {
+    sparkContext.setCheckpointDir(config.sparkConfig.checkpointDir)
+    sparkContext
+  }
+
   /**
    * Secures the application using security information defined in `config`.
    */
@@ -53,7 +58,7 @@ trait SparkContextProvider {
   final protected def sparkConf(name: String, config: ApplicationConfig) = makeSparkConf(config).map { _.setAppName(name) }
 
   final protected def withSparkContext[A](name: String, config: ApplicationConfig)(f: SparkContext => A) = sparkConf(name, config).map { sparkConfig =>
-    f(new SparkContext(sparkConfig))
+    f { setCheckpoint(config, new SparkContext(sparkConfig)) }
   }
 
 }

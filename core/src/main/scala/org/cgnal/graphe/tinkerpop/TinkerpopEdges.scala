@@ -24,6 +24,18 @@ case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEd
 
   def hasNulls        = hasNullVertex || hasNullEdges
 
+  def allIds = vertexId +: { inEdges.map { _.srcId } ++ outEdges.map { _.dstId } }
+
+  def allEdges = inEdges ::: outEdges
+
+  def hasNoInEdges  = inEdges.isEmpty
+
+  def hasNoOutEdges = outEdges.isEmpty
+
+  def isIsolated    = hasNoInEdges && hasNoOutEdges
+
+  def isNotIsolated = !isIsolated
+
   def asTinkerVertex(parentGraph: TinkerGraph, useTinkerpop: Boolean = true)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]): TinkerVertex = TinkerSparkVertex(
     vertexId      = vertexId,
     vertexLabel   = vertexLabelValue,

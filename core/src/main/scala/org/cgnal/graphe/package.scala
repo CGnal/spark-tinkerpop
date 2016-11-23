@@ -43,6 +43,19 @@ package object graphe {
 
     def filterNot(f: A => Boolean) = rdd.filter { !f(_) }
 
+    def withCheckpoint: RDD[A] = {
+      rdd.checkpoint()
+      rdd
+    }
+
+    def whilePersisted[B](f: RDD[A] => B) = {
+      rdd.persist()
+      rdd.count()
+      val result = f(rdd)
+      rdd.unpersist()
+      result
+    }
+
   }
 
   /**
@@ -86,10 +99,10 @@ package object graphe {
 
     /**
      * Aggregates `EdgeTriplet`s by sourceId, destinationId and the edge attribute.
+     * NOTE that at this point, duplicate edges with identical attributes and isolated edges are filtered out.
      */
     def collectEdgeTriplets = graph.aggregateMessages[TripletMap[A, B]](
       ctx => {
-        ctx.sendToSrc { Map { (ctx.srcId, ctx.dstId, ctx.attr) -> ctx.toEdgeTriplet } }
         ctx.sendToDst { Map { (ctx.srcId, ctx.dstId, ctx.attr) -> ctx.toEdgeTriplet } }
       },
       (a, b) => a ++ b,

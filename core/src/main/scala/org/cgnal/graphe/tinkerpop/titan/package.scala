@@ -5,12 +5,11 @@ import scala.reflect.ClassTag
 import org.apache.spark.graphx.EdgeTriplet
 import org.apache.spark.rdd.RDD
 
+import com.thinkaurelius.titan.core.TitanVertex
 import com.thinkaurelius.titan.core.schema.{ VertexLabelMaker => TitanVertexLabelMaker, EdgeLabelMaker => TitanEdgeLabelMaker, PropertyKeyMaker => TitanPropertyKeyMaker, TitanManagement }
 import com.thinkaurelius.titan.graphdb.internal.ElementLifeCycle
 import com.thinkaurelius.titan.graphdb.vertices.StandardVertex
 import com.thinkaurelius.titan.graphdb.transaction.{ StandardTitanTx => StandardTitanTransaction }
-import com.thinkaurelius.titan.graphdb.types.VertexLabelVertex
-import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
 
 /**
  * Package object containing implicit enrichment classes to provide convenient suffix methods.
@@ -18,6 +17,14 @@ import com.thinkaurelius.titan.graphdb.types.system.BaseVertexLabel
 package object titan {
 
   private type TitanVertexPair[A] = (TitanVertexContainer[A], TitanVertexContainer[A])
+
+  implicit class EnrichedId(id: Long) {
+
+    def asTitanId: TitanId = TitanId(1l, id + 1)
+
+    def asTitanId(numPartitions: Long) = TitanId(id % numPartitions, id + 1)
+
+  }
 
   /**
    * Enriches a Titan `Management` instance to allow less fussy schema creation functions, providing a closure around
@@ -46,7 +53,7 @@ package object titan {
 
     def idLimits = rdd.mapPartitions { partition =>
       Iterator {
-        partition.foldLeft(TitanIdLimits.empty) { _ +> _.vertexId }
+        partition.foldLeft(TitanIdLimits.empty) { _ +> _ }
       }
     }.reduce { _ ++> _ }
 
@@ -59,29 +66,28 @@ package object titan {
    */
   implicit class EnrichedTitanTransaction(transaction: StandardTitanTransaction) {
 
+    def getOrCreateVertex(titanId: Long)(default: => TitanVertex) = Option { transaction.getVertex(titanId) } getOrElse default
+
     /**
      * Creates a `StandardVertex` wrapped in a `TitanVertexContainer`
      * @param a the original vertex  class that needs to be converted into a Titan vertex
-     * @param titanId the desired id as created using an `IDManager` instnace
+     * @param titanId the desired id as created using an `IDManager` instance
      * @tparam A the vertex type
      */
     def standardVertex[A](a: A, titanId: Long) = TitanVertexContainer(
       a,
-      new StandardVertex(transaction, titanId, ElementLifeCycle.New)
+      getOrCreateVertex(titanId) { new StandardVertex(transaction, titanId, ElementLifeCycle.Loaded) }
     )
 
     /**
      * Creates a tinkerpop `Vertex` wrapped in a `TitanVertexContainer`
      * @param a the original vertex  class that needs to be converted into a Titan vertex
-     * @param titanId the desired id as created using an `IDManager` instnace
+     * @param titanId the desired id as created using an `IDManager` instance
      * @tparam A the vertex type
      */
-    def labelVertex[A](a: A, titanId: Long) = TitanVertexContainer(
+    def createVertex[A](a: A, titanId: Long) = TitanVertexContainer(
       a,
-      transaction.addVertex(
-        Long.box(titanId),
-        transaction.getVertexLabel { a.getClass.getSimpleName }
-      )
+      getOrCreateVertex(titanId) { transaction.addVertex(Long.box(titanId), transaction.getVertexLabel(a.getClass.getSimpleName)) }
     )
 
   }
@@ -101,7 +107,7 @@ package object titan {
 
     def connect(pair: TitanVertexPair[A])(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]): Unit = {
       pair._1.vertex.addEdge(
-        pair._1.a.getClass.getSimpleName,
+        triplet.attr.getClass.getSimpleName,
         pair._2.vertex,
         Arrows.tinkerKeyValuePropSetArrowF(arrowE).apF(triplet.attr): _*
       )

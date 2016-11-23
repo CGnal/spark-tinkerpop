@@ -8,7 +8,7 @@ import org.apache.spark.rdd.RDD
 
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex, Direction }
 
-import org.cgnal.graphe.GraphEGraph
+import org.cgnal.graphe.{ GraphEGraph, EnrichedRDD }
 
 /**
  * Provides functions that help converting from tinkerpop datastructures to Spark and vice-versa.
