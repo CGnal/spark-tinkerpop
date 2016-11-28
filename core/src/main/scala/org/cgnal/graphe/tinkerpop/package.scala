@@ -143,7 +143,7 @@ package object tinkerpop {
     def loadGryo(path: String): RDD[TinkerVertex] = sparkContext.newAPIHadoopFile[NullWritable, VertexWritable, GryoInputFormat](path).map { _._2.get() }
 
     def loadNative[A, B](implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) =
-      SparkBridge.asGraphX[A, B] { provider.loadNative(sparkContext) }
+      SparkBridge.asGraphX[A, B] { provider.loadNative(sparkContext).withCheckpoint }
   }
 
   implicit class EnrichedGraphTraversal[A, B](traversal: GraphTraversal[A, B]) {
@@ -176,6 +176,8 @@ package object tinkerpop {
   }
 
   implicit class EnrichedTinkerVertex(vertex: TinkerVertex) {
+
+    def asSpark = TinkerSparkVertex.fromTinkerpop(vertex)
 
     /**
      * Copies the properties of `other` onto `this`.

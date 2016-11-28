@@ -27,13 +27,15 @@ sealed class ItemVertexPropSetArrow(implicit arrowF: Arrows.TinkerRawPropSetArro
 sealed class CrossSellItemsRawPropSetArrow extends Arrows.TinkerRawPropSetArrowF[CrossSellItems] with Arrows.TinkerRawPropSetArrowR[CrossSellItems] {
 
   def apF(crossSell: CrossSellItems) = Map(
-    "productId"   -> Int.box { crossSell.productId },
-    "crossSellId" -> Int.box { crossSell.crossSellProductId }
+    "productId"    -> Int.box { crossSell.productId },
+    "crossSellId"  -> Int.box { crossSell.crossSellProductId },
+    "uniqueId"           -> Int.box { crossSell.id }
   )
 
   def apR(map: Map[String, AnyRef]) = CrossSellItems(
     map("productId").asInstanceOf[Int],
-    map("crossSellId").asInstanceOf[Int]
+    map("crossSellId").asInstanceOf[Int],
+    map("uniqueId").asInstanceOf[Int]
   )
 
 }

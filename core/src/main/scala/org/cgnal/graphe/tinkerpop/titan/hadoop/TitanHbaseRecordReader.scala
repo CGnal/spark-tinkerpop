@@ -1,12 +1,14 @@
 package org.cgnal.graphe.tinkerpop.titan.hadoop
 
+import scala.collection.convert.decorateAsScala._
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.NullWritable
 import org.apache.hadoop.mapreduce.{ TaskAttemptContext, InputSplit, RecordReader }
 
 import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
-import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex }
+import org.apache.tinkerpop.gremlin.structure.{Vertex => TinkerVertex, Direction}
 
 import com.thinkaurelius.titan.hadoop.formats.hbase.HBaseBinaryRecordReader
 import com.thinkaurelius.titan.hadoop.formats.util.TitanVertexDeserializer
@@ -31,7 +33,7 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
   private lazy val tinkerpopQuery    = compileScript(groovyQueryString)
 
   private lazy val titanHadoopSetup: TitanHadoopSetup = new TitanHadoopSetupImpl(config)
-  private lazy val vertexReader = new TitanVertexDeserializer(titanHadoopSetup)
+  private lazy val vertexReader = new TitanHbaseVertexReader(titanHadoopSetup)
 
   private lazy val usesScript = groovyQueryString match {
     case null | "" | "none" => false
@@ -45,7 +47,7 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
     true
   }
 
-  private def readKeyValue() = Option { vertexReader.readHadoopVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue) }.flatMap { evalQuery } match {
+  private def readKeyValue() = Option { vertexReader.readVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue.asScala) }.flatMap { evalQuery } match {
     case Some(tinkerVertex) => setCurrentValue(tinkerVertex)
     case None               => nextKeyValue()
   }

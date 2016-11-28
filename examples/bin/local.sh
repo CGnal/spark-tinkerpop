@@ -35,7 +35,7 @@ X_LIBEXT=${X_LIBEXT:-libext}
 # Spark configurations
 NUM_THREADS=2
 EXEC_MEM=2g
-NUM_PARTS=4
+NUM_PARTS=8
 SHUFFLE=0.1
 STORAGE=0.4
 

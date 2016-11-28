@@ -8,8 +8,8 @@ import org.apache.spark.SparkContext
 import org.apache.tinkerpop.gremlin.hadoop.structure.io.VertexWritable
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex }
 
-import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges, NativeGraphInputFormat }
-import org.cgnal.graphe.EnrichedHadoopConfig
+import org.cgnal.graphe.tinkerpop.{ Arrows, TinkerpopEdges, NativeGraphInputFormat, EnrichedTinkerVertex }
+import org.cgnal.graphe.{ EnrichedHadoopConfig, EnrichedRDD }
 
 /**
  * Extends the base `TinkerGraphProvider` APIs to add a more efficient way of loading and saving Spark graph data into
@@ -59,6 +59,6 @@ trait HadoopGraphLoader { this: NativeTinkerGraphProvider with Serializable =>
     nativeInputFormat.asInstanceOf[Class[NativeGraphInputFormat]],
     classOf[NullWritable],
     classOf[VertexWritable]
-  ).map { _._2.get() }.persist().asInstanceOf[RDD[TinkerVertex]]
+  ).map { _._2.get().asSpark }.withCheckpoint.asInstanceOf[RDD[TinkerVertex]]
 
 }

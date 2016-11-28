@@ -1,10 +1,13 @@
 package org.cgnal.graphe.tinkerpop
 
 import scala.collection.convert.decorateAsJava._
+import scala.collection.convert.decorateAsScala._
 
 import org.apache.spark.graphx.{ Edge => SparkEdge, EdgeTriplet => SparkEdgeTriplet }
 
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex, Edge => TinkerEdge, Graph => TinkerGraph, Direction, Element => TinkerElement }
+
+import org.cgnal.graphe.tinkerpop.graph.EmptyTinkerGraphProvider
 
 case class TinkerSparkEdge(edgeId: String,
                            edgeLabel: String,
@@ -42,4 +45,12 @@ object TinkerSparkEdge {
 
   def tripletId(sparkTriplet: SparkEdgeTriplet[_, _]) = generateId(sparkTriplet.srcId, sparkTriplet.dstId, sparkTriplet.attr.hashCode())
 
+  def fromTinkerpop(tinkerEdge: TinkerEdge, vertexLabel: String) = apply(
+    edgeId       = tinkerEdge.id().toString,
+    edgeLabel    = tinkerEdge.label(),
+    parentGraph  = EmptyTinkerGraphProvider.emptyGraph,
+    inVertexOpt  = Some { TinkerSparkVertex.fromTinkerpopNeighbor(tinkerEdge.inVertex(),  vertexLabel) },
+    outVertexOpt = Some { TinkerSparkVertex.fromTinkerpopNeighbor(tinkerEdge.outVertex(), vertexLabel) },
+    rawProperties = tinkerEdge.properties[AnyRef]().asScala.map { prop => prop.key() -> prop.value() }.toMap
+  )
 }

@@ -27,7 +27,7 @@ trait SparkContextProvider {
       .set("spark.executor.instances",            config.sparkConfig.numThreads.toString)
       .set("spark.default.parallelism",           config.sparkConfig.numPartitions.toString)
       .set("spark.executor.extraClassPath",       config.hadoopDir)
-      .set("spark.executor.extraJavaOptions",     "-Djava.net.preferIPv4Stack=true")
+      .set("spark.executor.extraJavaOptions",     "-Djava.net.preferIPv4Stack=true -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5050")
       .set("spark.driver.extraJavaOptions",       "-Djava.net.preferIPv4Stack=true")
   }
 

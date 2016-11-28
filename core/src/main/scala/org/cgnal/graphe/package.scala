@@ -39,21 +39,24 @@ package object graphe {
     if (fileSystem.exists(tempLocationPath)) { fileSystem.delete(tempLocationPath, true) }
   }
 
+  /**
+   * Implicit class to provide suffix method for RDDs.
+   * @param rdd the enriched `RDD` instance
+   */
   implicit class EnrichedRDD[A](rdd: RDD[A]) {
 
+    /**
+     * Removes all elements in `rdd` that do not satisfy predicate `f`.
+     * @param f the predicated used to filter out elements
+     */
     def filterNot(f: A => Boolean) = rdd.filter { !f(_) }
 
+    /**
+     * Checkpoints `rdd`, returning the instance.
+     */
     def withCheckpoint: RDD[A] = {
       rdd.checkpoint()
       rdd
-    }
-
-    def whilePersisted[B](f: RDD[A] => B) = {
-      rdd.persist()
-      rdd.count()
-      val result = f(rdd)
-      rdd.unpersist()
-      result
     }
 
   }
@@ -99,7 +102,7 @@ package object graphe {
 
     /**
      * Aggregates `EdgeTriplet`s by sourceId, destinationId and the edge attribute.
-     * NOTE that at this point, duplicate edges with identical attributes and isolated edges are filtered out.
+     * NOTE that at this point, duplicate edges with identical attributes and isolated vertices are filtered out.
      */
     def collectEdgeTriplets = graph.aggregateMessages[TripletMap[A, B]](
       ctx => {

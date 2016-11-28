@@ -1,5 +1,7 @@
 package org.cgnal.graphe.tinkerpop
 
+import org.cgnal.graphe.tinkerpop.graph.EmptyTinkerGraphProvider
+
 import scala.collection.convert.decorateAsJava._
 import scala.collection.convert.decorateAsScala._
 
@@ -53,5 +55,27 @@ case class TinkerSparkVertex(protected val vertexId: Long,
   def label() = vertexLabel
 
   def id() = vertexId.toString
+
+}
+
+object TinkerSparkVertex {
+
+  def fromTinkerpop(tinkerVertex: TinkerVertex): TinkerSparkVertex = apply(
+    vertexId      = tinkerVertex.id().asInstanceOf[Long],
+    vertexLabel   = tinkerVertex.label(),
+    parentGraph   = EmptyTinkerGraphProvider.emptyGraph,
+    inEdges       = tinkerVertex.edges(Direction.IN).asScala.map  { TinkerSparkEdge.fromTinkerpop(_, tinkerVertex.label()) }.toList,
+    outEdges      = tinkerVertex.edges(Direction.OUT).asScala.map { TinkerSparkEdge.fromTinkerpop(_, tinkerVertex.label()) }.toList,
+    propertiesMap = tinkerVertex.properties[AnyRef]().asScala.map { prop => prop.key() -> SparkVertexProperty.fromTinkerpop(prop) }.toMap
+  )
+
+  def fromTinkerpopNeighbor(tinkerVertex: TinkerVertex, label: String): TinkerSparkVertex = apply(
+    vertexId      = tinkerVertex.id().asInstanceOf[Long],
+    vertexLabel   = label,
+    parentGraph   = EmptyTinkerGraphProvider.emptyGraph,
+    inEdges       = List.empty,
+    outEdges      = List.empty,
+    propertiesMap = Map.empty
+  )
 
 }

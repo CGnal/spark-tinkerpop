@@ -10,4 +10,6 @@ object EmptyTinkerGraphProvider extends TinkerGraphProvider with Serializable {
 
   protected def createTransaction: TransactionWrapper = TinkerTransactionWrapper.create(graph)
 
+  def emptyGraph = graph
+
 }

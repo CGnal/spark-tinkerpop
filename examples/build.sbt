@@ -8,6 +8,7 @@ import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import com.typesafe.sbt.packager.universal.UniversalPlugin
 
 val applicationVersion = "1.0-SNAPSHOT"
+val debugPort = 5050
 
 organization := "org.cgnal"
 
@@ -21,7 +22,8 @@ javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
 def assemblyName = "spark-tinkerpop-examples"
 
-def isLibrary = Properties.propOrNone("build.yarn").map { _ => true }.isDefined
+def isLibrary = Properties.propOrNone("build.yarn" ).map { _ => true }.isDefined
+def isDebug   = true //Properties.propOrNone("build.debug").map { _ => true }.isDefined
 
 def here = file(".")
 def assemblyDir = file("assembly")
@@ -96,6 +98,8 @@ def universalMappings(mappings: Seq[(File, String)])(orgExclude: String, nameExc
   case (_, n) => n endsWith s"$orgExclude.$nameExclude-$versionExclude.jar"
 }
 
+def debugOptions = if (isDebug) s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=$debugPort" else ""
+
 // Versions
 def coreVersion       = "1.0-SNAPSHOT"
 def scallopVersion    = "2.0.1"
@@ -168,5 +172,7 @@ autoAPIMappings := true
 testOptions in Test += Tests.Filter { _ endsWith "Spec" }
 
 unmanagedBase := baseDirectory.value / "libext"
+
+javaOptions in run += debugOptions
 
 mappings in Universal := universalMappings({ mappings in Universal }.value)(organization.value, name.value, version.value) :+ named(thinJar(scalaBinaryVersion.value, version.value), "")

@@ -22,6 +22,11 @@ private[titan] case class TitanVertexContainer[A](a: A, vertex: TitanVertex) {
     vertex.property(key, value, Seq.empty[AnyRef]: _*)
   }
 
+  /**
+   * Applies `enrich` returning `this` at the end.
+   * @param arrow the transformation `Arrow` for `a` into a `Seq[AnyRef]`, which represents
+   *              `Seq(key1, value1, key2, value2, ...)`
+   */
   def enriched(implicit arrow: Arrows.TinkerRawPropSetArrowF[A]) = {
     enrich
     this

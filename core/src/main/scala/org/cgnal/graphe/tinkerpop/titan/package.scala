@@ -18,11 +18,30 @@ package object titan {
 
   private type TitanVertexPair[A] = (TitanVertexContainer[A], TitanVertexContainer[A])
 
+  /**
+   * Enriches a normal `Long` type value to provide suffix methods that allow conversion to `TitanId`, adding partition
+   * id where appropriate
+   */
   implicit class EnrichedId(id: Long) {
 
+    /**
+     * Creates a default `TitanId` instance where the partition id is set to `1l`, usually used in conjunction with the
+     * `toTitanPartitioned` function in `TitanId`.
+     */
     def asTitanId: TitanId = TitanId(1l, id + 1)
 
+    /**
+     * Creates a `TitanId` instance with the a partition id calculated as the modulus of the id on the number of
+     * expected partitions
+     * @param numPartitions number of expected partitions
+     */
     def asTitanId(numPartitions: Long) = TitanId(id % numPartitions, id + 1)
+
+    def write(fileName: String, limit: Int = 1000) = {
+      val writer = new java.io.FileWriter(fileName)
+      Stream.range(1, limit + 1).combinations(2).collect { case Stream(a, b) => s"$a\t$b\n" }.foreach { writer.write }
+      writer.close()
+    }
 
   }
 

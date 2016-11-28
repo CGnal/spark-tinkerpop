@@ -10,7 +10,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.graphx._
 
 import com.thinkaurelius.titan.core.Multiplicity.MULTI
-import com.thinkaurelius.titan.core.Cardinality.SINGLE
+import com.thinkaurelius.titan.core.Cardinality.{ SINGLE, SET }
 
 import org.cgnal.graphe.application.config.{ ExampleApplicationConfigReader, ExampleApplicationConfig }
 import org.cgnal.graphe.arrows.DomainArrows._
@@ -26,9 +26,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   private def loadData() = Try {
     sparkContext.textFile(config.inputFileLocation).collect {
       case line if !line.startsWith("#") => CrossSellItems.fromString(line)
-    }.collect {
-      case Some(item) => item
-    }.persist("Input")
+    }.collect { case Some(item) => item }.persist("Input")
   }
 
   private def loadVertices(rdd: RDD[CrossSellItems]) = Try {
@@ -52,6 +50,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
 
       m.createPropertyKey[JavaInt]("productId")   { _.cardinality(SINGLE) }
       m.createPropertyKey[JavaInt]("crossSellId") { _.cardinality(SINGLE) }
+      m.createPropertyKey[JavaInt]("uniqueId")    { _.cardinality(SET) }
     }
   }
 
@@ -68,7 +67,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   private def queryVertices(implicit provider: NativeTinkerGraphProvider) = Try {
     val vertices = provider.withGraph { g => g.traversal().V().toList.asScala }
     vertices.foreach { vertex =>
-      log.info { s"v: { id = [${vertex.id()}] label = [${vertex.label()}] props = [${vertex.properties().asScala.mkString(", ")}] }" }
+      log.trace { s"v: { id = [${vertex.id()}] label = [${vertex.label()}] props = [${vertex.properties().asScala.mkString(", ")}] }" }
     }
     log.info { s"Found [${vertices.size}] vertices" }
   }
@@ -76,7 +75,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   private def queryEdges(implicit provider: NativeTinkerGraphProvider) = Try {
     val edges = provider.withGraph { g => g.traversal().E().toList.asScala }
     edges.foreach { edge =>
-      log.info { s"e: { id = [${edge.id()}] label = [${edge.label()}] props = [${edge.properties().asScala.mkString(", ")}] }" }
+      log.trace { s"e: { id = [${edge.id()}] label = [${edge.label()}] props = [${edge.properties().asScala.mkString(", ")}] }" }
     }
     log.info { s"Found [${edges.size}] edges" }
   }

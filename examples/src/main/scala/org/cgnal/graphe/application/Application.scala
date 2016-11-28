@@ -72,7 +72,7 @@ trait Application { this: SparkContextInstance =>
    * objects. By default this will simply stop the current `SparkContext`.
    */
   def close(): Try[Unit] = Try {
-    sparkContext.stop()
+    //sparkContext.stop()
   }
 
 }
