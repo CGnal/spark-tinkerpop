@@ -2,6 +2,8 @@ package org.cgnal
 
 import java.util.UUID
 
+import org.apache.spark.storage.StorageLevel
+
 import scala.collection.convert.decorateAsScala._
 import scala.reflect.ClassTag
 

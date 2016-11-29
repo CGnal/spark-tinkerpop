@@ -62,7 +62,6 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
               case tinkerpopEdge =>
                 val vertex = transaction.createVertex(tinkerpopEdge.vertex, tinkerpopEdge.vertexId.asTitanId.toTitan(idManager)).enriched
                 tinkerpopEdge.inEdges.foreach { triplet =>
-                  println(triplet)
                   triplet.connect { transaction.createVertex(triplet.srcAttr, triplet.srcId.asTitanId.toTitan(idManager)) -> vertex }
                 }
             }

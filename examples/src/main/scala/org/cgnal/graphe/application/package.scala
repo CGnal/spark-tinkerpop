@@ -46,9 +46,9 @@ package object application {
       val body    = bodyLines.map {
         ev(_).productIterator.map {
           case null            => "null"
-          case array: Array[_] => s"[${array.mkString(", ").shorten(charLimit)}]"
-          case seq: Seq[_]     => s"[${seq.mkString(", ").shorten(charLimit)}]"
-          case other           => other.toString.shorten(charLimit)
+          case array: Array[_] => s"[${array.mkString(", ").shorten(charLimit - 3)}]"
+          case seq: Seq[_]     => s"[${seq.mkString(", ").shorten(charLimit - 3)}]"
+          case other           => other.toString.shorten(charLimit - 3)
         }.map { value => f"$value%-30s" }.mkString("|", "|", "|")
       }
       val fullLineTop    = Seq.fill(headers.size) { line }.mkString("+", "-", "+")

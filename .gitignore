@@ -6,6 +6,7 @@
 .DS_STORE
 test-data/
 output-data/
+checkpoint/
 target
 project/project
 project/target
@@ -15,6 +16,7 @@ project/target
 .README.md.html
 libraries
 *.log
+*.data
 metastore_db/
 internal
 .metadata

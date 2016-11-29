@@ -19,6 +19,9 @@ case $key in
     X_INPUT_FILE="$2"
     shift
     ;;
+    --debug)
+    X_DEBUG=true
+    ;;
     *)
     ;;
 esac
@@ -32,10 +35,17 @@ APP_NAME=${APP_NAME:-graphson}
 X_INPUT_FILE=${X_INPUT_FILE:-data/Amazon0302.small.txt}
 X_LIBEXT=${X_LIBEXT:-libext}
 
+if [ "$X_DEBUG" = true ];
+then
+    X_DEBUG_OPT="-Dbuild.debug"
+else
+    X_DEBUG_OPT=""
+fi
+
 # Spark configurations
-NUM_THREADS=2
+NUM_THREADS=1
 EXEC_MEM=2g
-NUM_PARTS=8
+NUM_PARTS=2
 SHUFFLE=0.1
 STORAGE=0.4
 
@@ -50,9 +60,9 @@ echo "[app-conf]   --memory $EXEC_MEM"
 echo "[app-conf]   --partitions $NUM_PARTS"
 echo "[app-conf]   --shuffle $SHUFFLE"
 echo "[app-conf]   --storage $STORAGE"
+echo "[app-conf]   --debug $X_DEBUG_OPT"
 
-#sbt -Dhadoop.home.dir=$HADOOP_HOME \
-sbt \
+sbt $X_DEBUG_OPT \
 "project examples" \
 "run $APP_NAME \
 -i $X_INPUT_FILE \

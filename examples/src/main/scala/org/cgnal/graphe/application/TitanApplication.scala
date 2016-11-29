@@ -50,7 +50,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
 
       m.createPropertyKey[JavaInt]("productId")   { _.cardinality(SINGLE) }
       m.createPropertyKey[JavaInt]("crossSellId") { _.cardinality(SINGLE) }
-      m.createPropertyKey[JavaInt]("uniqueId")    { _.cardinality(SET) }
+      m.createPropertyKey[String] ("uniqueId")    { _.cardinality(SET) }
     }
   }
 

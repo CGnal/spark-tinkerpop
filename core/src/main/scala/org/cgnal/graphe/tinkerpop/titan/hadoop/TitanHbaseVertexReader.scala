@@ -21,6 +21,8 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
 
   private val log = LoggerFactory.getLogger("cgnal.TitanHbaseVertexReader")
 
+  private def nextOption[A](iterator: Iterator[A]) = if (iterator.hasNext) Some { iterator.next() } else None
+
   private def withGraph[A](f: Graph => A) = f { TinkerGraph.open() }
 
   private def withRelation[A](id: Long, entry: Entry)(f: RelationCache => A) = f {
@@ -39,7 +41,7 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
       typeManager.getExistingRelationType(relation.typeId).asInstanceOf[InternalRelationType].isInvisibleType
     ) None else Some { relation }
 
-  private def getOrCreateVertex(id: Long, graph: Graph, label: String = "") = graph.vertices(Long.box(id)).asScala.toStream.headOption match {
+  private def getOrCreateVertex(id: Long, graph: Graph, label: String = "") = nextOption { graph.vertices(Long.box(id)).asScala } match {
     case None if label.isEmpty => graph.addVertex(T.id, Long.box(id))
     case None                  => graph.addVertex(T.id, Long.box(id), T.label, label)
     case Some(vertex)          => vertex
@@ -65,7 +67,7 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
     )
   }
 
-  private def hasRelation(vertex1: Vertex, vertex2: Vertex, relation: RelationCache) = (vertex1 == vertex1) && vertex1.edges(Direction.BOTH).asScala.exists { _.id == relation.relationId }
+  private def hasRelation(vertex1: Vertex, vertex2: Vertex, relation: RelationCache) = (vertex1 == vertex2) && vertex1.edges(Direction.OUT).asScala.exists { _.id == relation.relationId }
 
   private def addEdge(vertex: Vertex, relation: RelationCache, relationType: RelationType, graph: Graph) = {
     if (idManager.isPartitionedVertex(relation.getOtherVertexId)) None
@@ -75,7 +77,10 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
         if      (relation.direction == Direction.IN)  Some { otherVertex.addEdge(relationType.name, vertex, T.id, Long.box(relation.relationId)) }
         else if (relation.direction == Direction.OUT) Some { vertex.addEdge(relationType.name, otherVertex, T.id, Long.box(relation.relationId)) }
         else None
-      } else vertex.edges(Direction.BOTH).asScala.find { _.id() == relation.relationId }
+      } else {
+        log.info { s"Found loop in vertex with id [${vertex.id()}] - using first matching relation" }
+        vertex.edges(Direction.BOTH).asScala.find { _.id() == relation.relationId }
+      }
     }
   }
 
@@ -94,10 +99,10 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
 
     entries.foreach {
       withRelation(vertexId, _) { whenRegularType }.foreach { relation =>
-      val relationType = typeManager.getExistingRelationType(relation.typeId)
+        val relationType = typeManager.getExistingRelationType(relation.typeId)
 
-      if (relationType.isPropertyKey) addProperty(vertex, relation, relationType)
-      else addEdge(vertex, relation, relationType, g).map { addEdgeProperties(_, relation) }
+        if (relationType.isPropertyKey) addProperty(vertex, relation, relationType)
+        else addEdge(vertex, relation, relationType, g).map { addEdgeProperties(_, relation) }
       }
     }
 

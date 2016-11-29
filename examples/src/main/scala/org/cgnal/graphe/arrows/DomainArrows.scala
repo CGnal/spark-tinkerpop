@@ -29,13 +29,13 @@ sealed class CrossSellItemsRawPropSetArrow extends Arrows.TinkerRawPropSetArrowF
   def apF(crossSell: CrossSellItems) = Map(
     "productId"    -> Int.box { crossSell.productId },
     "crossSellId"  -> Int.box { crossSell.crossSellProductId },
-    "uniqueId"           -> Int.box { crossSell.id }
+    "uniqueId"     -> crossSell.id
   )
 
   def apR(map: Map[String, AnyRef]) = CrossSellItems(
     map("productId").asInstanceOf[Int],
     map("crossSellId").asInstanceOf[Int],
-    map("uniqueId").asInstanceOf[Int]
+    map("uniqueId").asInstanceOf[String]
   )
 
 }
