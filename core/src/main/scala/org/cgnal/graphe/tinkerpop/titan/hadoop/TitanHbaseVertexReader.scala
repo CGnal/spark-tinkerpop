@@ -1,17 +1,18 @@
 package org.cgnal.graphe.tinkerpop.titan.hadoop
 
-import com.thinkaurelius.titan.core.RelationType
-import com.thinkaurelius.titan.graphdb.internal.InternalRelationType
-import com.thinkaurelius.titan.graphdb.relations.RelationCache
-
 import scala.collection.convert.decorateAsScala._
 
-import com.thinkaurelius.titan.diskstorage.{ Entry, StaticBuffer }
-import com.thinkaurelius.titan.hadoop.formats.util.input.TitanHadoopSetup
+import org.slf4j.LoggerFactory
+
 import org.apache.tinkerpop.gremlin.structure._
 import org.apache.tinkerpop.gremlin.tinkergraph.structure.TinkerGraph
-import org.slf4j.LoggerFactory
+
+import com.thinkaurelius.titan.core.RelationType
 import com.thinkaurelius.titan.core.Cardinality._
+import com.thinkaurelius.titan.diskstorage.{ Entry, StaticBuffer }
+import com.thinkaurelius.titan.graphdb.internal.InternalRelationType
+import com.thinkaurelius.titan.graphdb.relations.RelationCache
+import com.thinkaurelius.titan.hadoop.formats.util.input.TitanHadoopSetup
 
 class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoCloseable {
 
