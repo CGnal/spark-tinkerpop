@@ -26,7 +26,9 @@ trait SparkContextProvider {
       .set("spark.executor.memory",               config.sparkConfig.executorMemory)
       .set("spark.executor.instances",            config.sparkConfig.numThreads.toString)
       .set("spark.default.parallelism",           config.sparkConfig.numPartitions.toString)
+      .set("spark.memory.storageFraction",        config.sparkConfig.storageFraction.toString)
       .set("spark.executor.extraClassPath",       config.hadoopDir)
+      .set("spark.serializer",                    "org.apache.spark.serializer.KryoSerializer")
       .set("spark.executor.extraJavaOptions",     "-Djava.net.preferIPv4Stack=true -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5050")
       .set("spark.driver.extraJavaOptions",       "-Djava.net.preferIPv4Stack=true")
   }

@@ -46,11 +46,11 @@ object TinkerSparkEdge {
   def tripletId(sparkTriplet: SparkEdgeTriplet[_, _]) = generateId(sparkTriplet.srcId, sparkTriplet.dstId, sparkTriplet.attr.hashCode())
 
   def fromTinkerpop(tinkerEdge: TinkerEdge, vertexLabel: String) = apply(
-    edgeId       = tinkerEdge.id().toString,
-    edgeLabel    = tinkerEdge.label(),
-    parentGraph  = EmptyTinkerGraphProvider.emptyGraph,
-    inVertexOpt  = Some { TinkerSparkVertex.fromTinkerpopNeighbor(tinkerEdge.inVertex(),  vertexLabel) },
-    outVertexOpt = Some { TinkerSparkVertex.fromTinkerpopNeighbor(tinkerEdge.outVertex(), vertexLabel) },
+    edgeId        = tinkerEdge.id().toString,
+    edgeLabel     = tinkerEdge.label(),
+    parentGraph   = EmptyTinkerGraphProvider.emptyGraph,
+    inVertexOpt   = Some { TinkerSparkVertex.fromTinkerpopNeighbor(tinkerEdge.inVertex(),  vertexLabel) },
+    outVertexOpt  = Some { TinkerSparkVertex.fromTinkerpopNeighbor(tinkerEdge.outVertex(), vertexLabel) },
     rawProperties = tinkerEdge.properties[AnyRef]().asScala.map { prop => prop.key() -> prop.value() }.toMap
   )
 }

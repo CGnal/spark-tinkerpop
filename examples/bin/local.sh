@@ -43,11 +43,11 @@ else
 fi
 
 # Spark configurations
-NUM_THREADS=1
+NUM_THREADS=4
 EXEC_MEM=2g
-NUM_PARTS=2
+NUM_PARTS=8
 SHUFFLE=0.1
-STORAGE=0.4
+STORAGE=0.7
 
 ### Start ###
 

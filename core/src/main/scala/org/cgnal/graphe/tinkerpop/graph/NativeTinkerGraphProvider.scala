@@ -59,6 +59,6 @@ trait HadoopGraphLoader { this: NativeTinkerGraphProvider with Serializable =>
     nativeInputFormat.asInstanceOf[Class[NativeGraphInputFormat]],
     classOf[NullWritable],
     classOf[VertexWritable]
-  ).map { _._2.get().asSpark }.withCheckpoint.asInstanceOf[RDD[TinkerVertex]]
+  ).map { _._2.get().asSpark }.asInstanceOf[RDD[TinkerVertex]]
 
 }

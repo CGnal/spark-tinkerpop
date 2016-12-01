@@ -11,8 +11,8 @@ import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex, Edge => 
 case class TinkerSparkVertex(protected val vertexId: Long,
                              protected val vertexLabel: String,
                              protected val parentGraph: TinkerGraph,
-                             protected val inEdges: List[TinkerEdge] = List.empty[TinkerEdge],
-                             protected val outEdges: List[TinkerEdge] = List.empty[TinkerEdge],
+                             protected val inEdges: Array[TinkerEdge]  = Array.empty[TinkerEdge],
+                             protected val outEdges: Array[TinkerEdge] = Array.empty[TinkerEdge],
                              protected val propertiesMap: Map[String, TinkerProperty[AnyRef]] = Map.empty[String, TinkerProperty[AnyRef]]) extends TinkerVertex {
 
   private lazy val ownedPropertiesMap = propertiesMap.map {
@@ -24,11 +24,11 @@ case class TinkerSparkVertex(protected val vertexId: Long,
     ownedPropertiesMap.get { key }.map { _.asInstanceOf[TinkerProperty[A]] :: props } getOrElse props
   }.toIterator.asJava
 
-  private def selectEdges(edgeList: List[TinkerEdge], edgeLabels: Seq[String]) =
+  private def selectEdges(edgeList: Array[TinkerEdge], edgeLabels: Seq[String]) =
     if (edgeLabels.nonEmpty) edgeList.filter { edge => edgeLabels contains edge.label() }.toIterator.asJava
     else edgeList.toIterator.asJava
 
-  override def vertices(direction: Direction, edgeLabels: String*) = { inEdges ::: outEdges }.toIterator.flatMap { edge =>
+  override def vertices(direction: Direction, edgeLabels: String*) = { inEdges ++ outEdges }.toIterator.flatMap { edge =>
     if      (direction == Direction.IN  && { edgeLabels contains edge.label() }) Iterator { edge.inVertex()  }
     else if (direction == Direction.OUT && { edgeLabels contains edge.label() }) Iterator { edge.outVertex() }
     else if (edgeLabels contains edge.label()) edge.bothVertices().asScala
@@ -38,7 +38,7 @@ case class TinkerSparkVertex(protected val vertexId: Long,
   def edges(direction: Direction, edgeLabels: String*) =
     if      (direction == Direction.IN)  selectEdges(inEdges, edgeLabels)
     else if (direction == Direction.OUT) selectEdges(outEdges, edgeLabels)
-    else selectEdges(inEdges ::: outEdges, edgeLabels)
+    else selectEdges(inEdges ++ outEdges, edgeLabels)
 
   def property[A](cardinality: Cardinality, key: String, value: A, keyValues: AnyRef*) = propertyAdditionNotSupported
 
@@ -64,8 +64,8 @@ object TinkerSparkVertex {
     vertexId      = tinkerVertex.id().asInstanceOf[Long],
     vertexLabel   = tinkerVertex.label(),
     parentGraph   = EmptyTinkerGraphProvider.emptyGraph,
-    inEdges       = tinkerVertex.edges(Direction.IN).asScala.map  { TinkerSparkEdge.fromTinkerpop(_, tinkerVertex.label()) }.toList,
-    outEdges      = tinkerVertex.edges(Direction.OUT).asScala.map { TinkerSparkEdge.fromTinkerpop(_, tinkerVertex.label()) }.toList,
+    inEdges       = tinkerVertex.edges(Direction.IN).asScala.map  { TinkerSparkEdge.fromTinkerpop(_, tinkerVertex.label()) }.toArray,
+    outEdges      = tinkerVertex.edges(Direction.OUT).asScala.map { TinkerSparkEdge.fromTinkerpop(_, tinkerVertex.label()) }.toArray,
     propertiesMap = tinkerVertex.properties[AnyRef]().asScala.map { prop => prop.key() -> SparkVertexProperty.fromTinkerpop(prop) }.toMap
   )
 
@@ -73,8 +73,8 @@ object TinkerSparkVertex {
     vertexId      = tinkerVertex.id().asInstanceOf[Long],
     vertexLabel   = label,
     parentGraph   = EmptyTinkerGraphProvider.emptyGraph,
-    inEdges       = List.empty,
-    outEdges      = List.empty,
+    inEdges       = Array.empty,
+    outEdges      = Array.empty,
     propertiesMap = Map.empty
   )
 

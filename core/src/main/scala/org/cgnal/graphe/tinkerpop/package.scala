@@ -117,8 +117,8 @@ package object tinkerpop {
       vertexId      = vertex._1,
       vertexLabel   = vertex._2.getClass.getSimpleName,
       parentGraph   = parentGraph,
-      inEdges       = inEdge.toList,
-      outEdges      = outEdge.toList,
+      inEdges       = inEdge.toArray,
+      outEdges      = outEdge.toArray,
       propertiesMap = asTinkerPropertySet
     )
   }
@@ -142,8 +142,11 @@ package object tinkerpop {
 
     def loadGryo(path: String): RDD[TinkerVertex] = sparkContext.newAPIHadoopFile[NullWritable, VertexWritable, GryoInputFormat](path).map { _._2.get() }
 
-    def loadNative[A, B](implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) =
-      SparkBridge.asGraphX[A, B] { provider.loadNative(sparkContext).withCheckpoint }
+    def loadNative[A, B](persist: Boolean = true)(implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) =
+      SparkBridge.asGraphX[A, B] {
+        if (persist) provider.loadNative(sparkContext).persisted()
+        else         provider.loadNative(sparkContext)
+      }
   }
 
   implicit class EnrichedGraphTraversal[A, B](traversal: GraphTraversal[A, B]) {

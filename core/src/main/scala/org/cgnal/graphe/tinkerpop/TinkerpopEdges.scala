@@ -40,8 +40,8 @@ case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEd
     vertexId      = vertexId,
     vertexLabel   = vertexLabelValue,
     parentGraph   = parentGraph,
-    inEdges       = inEdges.map  { _.asTinkerEdge(parentGraph) },
-    outEdges      = outEdges.map { _.asTinkerEdge(parentGraph) },
+    inEdges       = inEdges.map  { _.asTinkerEdge(parentGraph) }.toArray,
+    outEdges      = outEdges.map { _.asTinkerEdge(parentGraph) }.toArray,
     propertiesMap = arrowV.apF(vertex)
   )
 

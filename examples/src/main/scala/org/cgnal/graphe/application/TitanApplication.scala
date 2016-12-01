@@ -57,7 +57,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   private def graphX(vertices: RDD[(VertexId, Item)], edges: RDD[Edge[CrossSellItems]]) = Try { Graph(vertices, edges) }
 
   private def loadGraph()(implicit provider: NativeTinkerGraphProvider) = Try {
-    sparkContext.loadNative[Item, CrossSellItems]
+    sparkContext.loadNative[Item, CrossSellItems](true)
   }
 
   private def saveGraph(graph: Graph[Item, CrossSellItems])(implicit provider: NativeTinkerGraphProvider) = Try {
@@ -107,7 +107,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   }
 
   private def runBody() = for {
-    _ <- save()
+//    _ <- save()
     _ <- load()
   } yield ()
 

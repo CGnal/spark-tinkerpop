@@ -57,7 +57,13 @@ package object graphe {
      * Checkpoints `rdd`, returning the instance.
      */
     def withCheckpoint: RDD[A] = {
-      rdd.checkpoint()
+      rdd.persisted().checkpoint()
+      rdd
+    }
+
+    def persisted(immediate: Boolean = true): RDD[A] = {
+      rdd.persist(StorageLevel.MEMORY_AND_DISK_SER)
+      if (immediate) rdd.count()
       rdd
     }
 
@@ -113,6 +119,11 @@ package object graphe {
       (a, b) => a ++ b,
       TripletFields.All
     )
+
+    def withCheckpoint: Graph[A, B] = {
+      graph.checkpoint()
+      graph
+    }
 
   }
 

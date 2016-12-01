@@ -22,7 +22,8 @@ storage:
   hbase:
     table: cross-sell-example
     short-cf-names: false
-  hostname: 127.0.0.1
+    regions-per-server: 2
+  hostname: localhost
   port: 2181
 ioformat:
     filter-partitioned-vertices: true
