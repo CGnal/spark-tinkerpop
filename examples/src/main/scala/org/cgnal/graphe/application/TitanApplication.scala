@@ -30,15 +30,15 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   }
 
   private def loadVertices(rdd: RDD[CrossSellItems]) = Try {
-    rdd.flatMap { crossSell => Seq(
-      crossSell.productId.toLong -> Item(crossSell.productId),
-      crossSell.crossSellProductId.toLong -> Item(crossSell.crossSellProductId))
+    rdd.flatMap {
+      case CrossSellItems(productId, crossSellProductId, _) if crossSellProductId != -1 => Seq(productId.toLong -> Item(productId), crossSellProductId.toLong -> Item(crossSellProductId))
+      case CrossSellItems(productId, _, _)                                              => Seq(productId.toLong -> Item(productId))
     }.distinct().persist("Vertices")
   }
 
   private def loadEdges(rdd: RDD[CrossSellItems]) = Try {
-    rdd.map { crossSell =>
-      Edge(crossSell.productId, crossSell.crossSellProductId, crossSell)
+    rdd.collect {
+      case crossSell if crossSell.crossSellProductId != -1 => Edge(crossSell.productId, crossSell.crossSellProductId, crossSell)
     }.persist("Edges")
   }
 

@@ -22,9 +22,8 @@ storage:
   hbase:
     table: cross-sell-example
     short-cf-names: false
-    regions-per-server: 2
+    regions-count: 2
   hostname: localhost
   port: 2181
 ioformat:
     filter-partitioned-vertices: true
-    vertex-query: v.has("productId")

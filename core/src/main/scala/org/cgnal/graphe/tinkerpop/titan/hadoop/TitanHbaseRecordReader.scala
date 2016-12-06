@@ -46,7 +46,7 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
     true
   }
 
-  private def readKeyValue() = Option { vertexReader.readVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue.asScala) }.flatMap { evalQuery } match {
+  private def readKeyValue() = vertexReader.readVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue.asScala).flatMap { evalQuery } match {
     case Some(tinkerVertex) => setCurrentValue(tinkerVertex)
     case None               => nextKeyValue()
   }

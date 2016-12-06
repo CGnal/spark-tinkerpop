@@ -21,6 +21,7 @@ object CrossSellItems {
 
   def fromString(s: String, extractorRegex: Regex = "(\\d+)\\s+(\\d+)".r): Option[CrossSellItems] = s match {
     case extractorRegex(productId, crossSellProductId) => Some { apply(productId, crossSellProductId) }
+    case singleItem if singleItem.trim.nonEmpty        => Some { apply(singleItem.trim.toInt, -1, crossSellId) }
     case _                                             => None
   }
 

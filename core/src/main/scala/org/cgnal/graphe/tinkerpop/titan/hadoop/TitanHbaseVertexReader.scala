@@ -92,25 +92,28 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
   }
 
   private def getRelationVertex(vertexId: Long, entries: Iterable[Entry], graph: Graph) = entries.toStream.flatMap {
-    withRelation(vertexId, _) { findVertex(vertexId, graph, _) }
-  }.headOption getOrElse getOrCreateVertex(vertexId, graph)
-
-  def readVertex(vertexId: Long, entries: Iterable[Entry]): Vertex = withGraph { g =>
-    val vertex = getRelationVertex(vertexId, entries, g)
-
-    entries.foreach {
-      withRelation(vertexId, _) { whenRegularType }.foreach { relation =>
-        val relationType = typeManager.getExistingRelationType(relation.typeId)
-
-        if (relationType.isPropertyKey) addProperty(vertex, relation, relationType)
-        else addEdge(vertex, relation, relationType, g).map { addEdgeProperties(_, relation) }
-      }
+    withRelation(vertexId, _) {
+      whenRegularType(_).map { findVertex(vertexId, graph, _) getOrElse getOrCreateVertex(vertexId, graph) }
     }
+  }.headOption
 
-    vertex
+  def readVertex(vertexId: Long, entries: Iterable[Entry]): Option[Vertex] = withGraph { g =>
+    getRelationVertex(vertexId, entries, g).map { vertex =>
+
+      entries.foreach {
+        withRelation(vertexId, _) { whenRegularType }.foreach { relation =>
+          val relationType = typeManager.getExistingRelationType(relation.typeId)
+
+          if (relationType.isPropertyKey) addProperty(vertex, relation, relationType)
+          else addEdge(vertex, relation, relationType, g).map { addEdgeProperties(_, relation) }
+        }
+      }
+
+      vertex
+    }
   }
 
-  def readVertex(key: StaticBuffer, entries: Iterable[Entry]): Vertex = readVertex(idManager.getKeyID(key), entries)
+  def readVertex(key: StaticBuffer, entries: Iterable[Entry]): Option[Vertex] = readVertex(idManager.getKeyID(key), entries)
 
   def close() = titanHadoopSetup.close()
 

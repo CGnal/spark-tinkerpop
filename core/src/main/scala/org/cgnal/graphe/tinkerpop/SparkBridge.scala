@@ -3,7 +3,7 @@ package org.cgnal.graphe.tinkerpop
 import scala.reflect.ClassTag
 import scala.collection.convert.decorateAsScala._
 
-import org.apache.spark.graphx.{ Graph => SparkGraph }
+import org.apache.spark.graphx.{ EdgeTriplet, Graph => SparkGraph }
 import org.apache.spark.rdd.RDD
 
 import org.apache.tinkerpop.gremlin.structure.{ Vertex => TinkerVertex, Direction }
@@ -23,7 +23,10 @@ object SparkBridge {
    * @return an `RDD[TinkerpopEdges[A, B]]`
    */
   def asTinkerpop[A, B](graph: SparkGraph[A, B])(implicit A: ClassTag[A], B: ClassTag[B]) =
-    graph.collectEdgeTriplets.join { graph.vertices }.map { case (vertexId, (edges, vertex)) => TinkerpopEdges(vertexId, vertex, edges.values.toList) }
+    graph.collectEdgeTriplets.rightOuterJoin { graph.vertices }.map {
+      case (vertexId, (Some(edges), vertex)) => TinkerpopEdges(vertexId, vertex, edges.values.toList)
+      case (vertexId, (None, vertex))        => TinkerpopEdges(vertexId, vertex, List.empty[EdgeTriplet[A, B]])
+    }
 
   /**
    * Uses implicit `Arrow`s to convert an `RDD[Vertex]` containing tinkerpop vertices into an `RDD[(Long, A)]`, which is
