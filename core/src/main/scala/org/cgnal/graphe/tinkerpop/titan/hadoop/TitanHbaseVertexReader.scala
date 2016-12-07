@@ -14,7 +14,7 @@ import com.thinkaurelius.titan.graphdb.internal.InternalRelationType
 import com.thinkaurelius.titan.graphdb.relations.RelationCache
 import com.thinkaurelius.titan.hadoop.formats.util.input.TitanHadoopSetup
 
-class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoCloseable {
+final class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoCloseable {
 
   private lazy val idManager          = titanHadoopSetup.getIDManager
   private lazy val typeManager        = titanHadoopSetup.getTypeInspector
@@ -36,11 +36,10 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
     } else None
   }
 
-  private def whenRegularType[A](relation: RelationCache) =
-    if (
-      systemTypesManager.isSystemType(relation.typeId) ||
-      typeManager.getExistingRelationType(relation.typeId).asInstanceOf[InternalRelationType].isInvisibleType
-    ) None else Some { relation }
+  private def whenRegularType[A](relation: RelationCache) = if (
+    systemTypesManager.isSystemType(relation.typeId) ||
+    typeManager.getExistingRelationType(relation.typeId).asInstanceOf[InternalRelationType].isInvisibleType
+  ) None else Some { relation }
 
   private def getOrCreateVertex(id: Long, graph: Graph, label: String = "") = nextOption { graph.vertices(Long.box(id)).asScala } match {
     case None if label.isEmpty => graph.addVertex(T.id, Long.box(id))
@@ -58,15 +57,13 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
     }
   }
 
-  private def addProperty(vertex: Vertex, relation: RelationCache, relationType: RelationType) = Some {
-    vertex.property(
-      getPropertyKeyCardinality(relationType.name),
-      relationType.name,
-      relation.getValue,
-      T.id,
-      Long.box(relation.relationId)
-    )
-  }
+  private def addProperty(vertex: Vertex, relation: RelationCache, relationType: RelationType): Unit = vertex.property(
+    getPropertyKeyCardinality(relationType.name),
+    relationType.name,
+    relation.getValue,
+    T.id,
+    Long.box(relation.relationId)
+  )
 
   private def hasRelation(vertex1: Vertex, vertex2: Vertex, relation: RelationCache) = (vertex1 == vertex2) && vertex1.edges(Direction.OUT).asScala.exists { _.id == relation.relationId }
 
@@ -98,18 +95,15 @@ class TitanHbaseVertexReader(titanHadoopSetup: TitanHadoopSetup) extends AutoClo
   }.headOption
 
   def readVertex(vertexId: Long, entries: Iterable[Entry]): Option[Vertex] = withGraph { g =>
-    getRelationVertex(vertexId, entries, g).map { vertex =>
-
-      entries.foreach {
-        withRelation(vertexId, _) { whenRegularType }.foreach { relation =>
+    getRelationVertex(vertexId, entries, g).map {
+      entries.foldLeft(_) { (vertex, entry) =>
+        withRelation(vertexId, entry) { whenRegularType }.foreach { relation =>
           val relationType = typeManager.getExistingRelationType(relation.typeId)
-
           if (relationType.isPropertyKey) addProperty(vertex, relation, relationType)
-          else addEdge(vertex, relation, relationType, g).map { addEdgeProperties(_, relation) }
+          else addEdge(vertex, relation, relationType, g).foreach { addEdgeProperties(_, relation) }
         }
+        vertex
       }
-
-      vertex
     }
   }
 

@@ -107,7 +107,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   }
 
   private def runBody() = for {
-//    _ <- save()
+    _ <- save()
     _ <- load()
   } yield ()
 
