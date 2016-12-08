@@ -57,11 +57,11 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   private def graphX(vertices: RDD[(VertexId, Item)], edges: RDD[Edge[CrossSellItems]]) = Try { Graph(vertices, edges) }
 
   private def loadGraph()(implicit provider: NativeTinkerGraphProvider) = Try {
-    sparkContext.loadNative[Item, CrossSellItems](true)
+    sparkContext.loadNativeContainer[Item, CrossSellItems]
   }
 
   private def saveGraph(graph: Graph[Item, CrossSellItems])(implicit provider: NativeTinkerGraphProvider) = Try {
-    graph.saveNativeGraph(false)
+    graph.saveNativeGraph()
   }
 
   private def queryVertices(implicit provider: NativeTinkerGraphProvider) = Try {
@@ -94,9 +94,10 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   } yield ()
 
   private def load() = for {
-    graph <- timed("Loading graph")       { loadGraph()                      }
-    _     <- timed("Recovering Vertices") { show(graph.vertices.values)      }
-    _     <- timed("Recovering Edges")    { show(graph.edges.map { _.attr }) }
+    graphContainer <- timed("Loading graph")       { loadGraph()                      }
+    _              <- timed("Recovering Vertices") { show(graphContainer.graph.vertices.values)      }
+    _              <- timed("Recovering Edges")    { show(graphContainer.graph.edges.map { _.attr }) }
+    _              <- timed("Unpersisting input")  { Try(graphContainer.unpersistInput()) }
   } yield ()
 
   private def tearDown() = if (config.tearDown) {

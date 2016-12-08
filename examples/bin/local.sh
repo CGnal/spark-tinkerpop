@@ -65,6 +65,7 @@ echo "[app-conf]   --debug $X_DEBUG_OPT"
 sbt $X_DEBUG_OPT \
 "project examples" \
 "run $APP_NAME \
+--tear-down \
 -i $X_INPUT_FILE \
 -l $X_LIBEXT \
 -h $HADOOP_HOME/etc/hadoop \

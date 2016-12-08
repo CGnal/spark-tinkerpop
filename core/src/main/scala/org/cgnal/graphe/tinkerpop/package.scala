@@ -86,13 +86,13 @@ package object tinkerpop {
 
     /**
      * Saves the graph using the implicit `NativeTinkerGraphProvider` instance.
-     * @param useTinkerpop indicates whether id generation is done explicitly using tinkerpop APIs (typically using
-     *                     `T.id`) or is delegated to the graph system.
+     * @param useTinkerpopKeys indicates whether id generation is done explicitly using tinkerpop APIs (typically using
+     *                         `T.id` and `T.label`) or is delegated to the graph system.
      * @param graphProvider the `NativeGraphProvider` instance that is implements the saving operation.
      * @param arrowV the transformation arrow `A >-> Map[String, AnyRef]`
      * @param arrowE the transformation arrow `B >-> Map[String, AnyRef]`
      */
-    def saveNativeGraph(useTinkerpop: Boolean = true)(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative(useTinkerpop)
+    def saveNativeGraph(useTinkerpopKeys: Boolean = false)(implicit A: ClassTag[A], B: ClassTag[B], graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = new EnrichedTinkerEdgeRDD(asTinkerpop).saveNative(useTinkerpopKeys)
 
   }
 
@@ -133,7 +133,7 @@ package object tinkerpop {
 
     def saveAsGraphSON(path: String)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = asVertexWritable(EmptyTinkerGraphProvider, arrowV, arrowE).saveAsNewAPIHadoopFile[GraphSONOutputFormat](path)
 
-    def saveNative(useTinkerpop: Boolean = false)(implicit graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = graphProvider.saveNative(rdd)
+    def saveNative(useTinkerpopKeys: Boolean = false)(implicit graphProvider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B]) = graphProvider.saveNative(rdd, useTinkerpopKeys)
   }
 
   implicit class EnrichedTinkerSparkContext(sparkContext: SparkContext) {
@@ -142,11 +142,11 @@ package object tinkerpop {
 
     def loadGryo(path: String): RDD[TinkerVertex] = sparkContext.newAPIHadoopFile[NullWritable, VertexWritable, GryoInputFormat](path).map { _._2.get() }
 
-    def loadNative[A, B](persist: Boolean = true)(implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) =
-      SparkBridge.asGraphX[A, B] {
-        if (persist) provider.loadNative(sparkContext).persisted()
-        else         provider.loadNative(sparkContext)
-      }
+    def loadNative[A, B](implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) =
+      SparkBridge.asGraphX[A, B] { provider.loadNative(sparkContext) }
+
+    def loadNativeContainer[A, B](implicit provider: NativeTinkerGraphProvider, arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B], A: ClassTag[A], B: ClassTag[B]) =
+      GraphContainer.fromRawVertices[A, B] { provider.loadNative(sparkContext) }
   }
 
   implicit class EnrichedGraphTraversal[A, B](traversal: GraphTraversal[A, B]) {

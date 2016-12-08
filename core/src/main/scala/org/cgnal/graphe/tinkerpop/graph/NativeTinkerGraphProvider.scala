@@ -31,14 +31,14 @@ trait NativeTinkerGraphProvider extends TinkerGraphProvider { this: Serializable
    * Note that this can be a very low-level implementation, but should be general enough to account for any type of
    * vertices and edges.
    * @param rdd the Spark `RDD` to store
-   * @param useTinkerpop indicates whether the vertex creation should leave id generation to the graph libraries, or
+   * @param useTinkerpopKeys indicates whether the vertex creation should leave id generation to the graph libraries, or
    *                     use tinkerpop APIs to set the `id` key and value (typically by setting the  `T.id` property)
    * @param arrowV the vertex transformation function from `A` to a `Map`
    * @param arrowE the edge transformation function from `B` to a `Map`
    * @tparam A the vertex type
    * @tparam B the edge type
    */
-  def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpop: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B])
+  def saveNative[A, B](rdd: RDD[TinkerpopEdges[A, B]], useTinkerpopKeys: Boolean = false)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A], arrowE: Arrows.TinkerRawPropSetArrowF[B])
 
 }
 

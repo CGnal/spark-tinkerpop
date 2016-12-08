@@ -6,11 +6,11 @@ import org.apache.tinkerpop.gremlin.structure.{ Graph => TinkerGraph, Vertex => 
 
 case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEdge[A, B]], outEdges: List[SparkEdge[A, B]]) {
 
-  def vertexIdKey(useTinkerPop: Boolean = true): AnyRef = if (useTinkerPop) T.id else "vertexId"
+  def vertexIdKey(useTinkerPopId: Boolean = true): AnyRef = if (useTinkerPopId) T.id else "vertexId"
 
   def vertexIdValue = vertexId.toString
 
-  def vertexLabelKey(useTinkerPop: Boolean = true): AnyRef = if (useTinkerPop) T.label else "vertexLabel"
+  def vertexLabelKey(useTinkerPopLabel: Boolean = true): AnyRef = if (useTinkerPopLabel) T.label else "vertexLabel"
 
   def vertexLabelValue = vertex.getClass.getSimpleName
 
@@ -36,7 +36,7 @@ case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEd
 
   def isNotIsolated = !isIsolated
 
-  def asTinkerVertex(parentGraph: TinkerGraph, useTinkerpop: Boolean = true)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]): TinkerVertex = TinkerSparkVertex(
+  def asTinkerVertex(parentGraph: TinkerGraph)(implicit arrowV: Arrows.TinkerVertexPropSetArrowF[A, AnyRef], arrowE: Arrows.TinkerRawPropSetArrowF[B]): TinkerVertex = TinkerSparkVertex(
     vertexId      = vertexId,
     vertexLabel   = vertexLabelValue,
     parentGraph   = parentGraph,
@@ -45,9 +45,9 @@ case class TinkerpopEdges[A, B](vertexId: Long, vertex: A, inEdges: List[SparkEd
     propertiesMap = arrowV.apF(vertex)
   )
 
-  def asVertexKeyValue(useTinkerpop: Boolean = true)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A]): Seq[AnyRef] =
-    vertexIdKey(useTinkerpop)    +: vertexIdValue    +:
-    vertexLabelKey(useTinkerpop) +: vertexLabelValue +:
+  def asVertexKeyValue(useTinkerpopKeys: Boolean = true)(implicit arrowV: Arrows.TinkerRawPropSetArrowF[A]): Seq[AnyRef] =
+    vertexIdKey(useTinkerpopKeys)    +: vertexIdValue    +:
+    vertexLabelKey(useTinkerpopKeys) +: vertexLabelValue +:
     Arrows.tinkerKeyValuePropSetArrowF(arrowV).apF { vertex }
 
 }
@@ -57,5 +57,7 @@ object TinkerpopEdges {
   def apply[A, B](vertexId: Long, vertex: A, allEdges: List[SparkEdge[A, B]]): TinkerpopEdges[A, B] = allEdges.partition { _.dstId == vertexId } match {
     case (inDegrees, outDegrees) => apply(vertexId, vertex, inDegrees, outDegrees)
   }
+
+  def empty[A, B](vertexId: Long, vertex: A): TinkerpopEdges[A, B] = apply[A, B](vertexId, vertex, List.empty[SparkEdge[A, B]], List.empty[SparkEdge[A, B]])
 
 }

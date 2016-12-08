@@ -71,8 +71,6 @@ trait Application { this: SparkContextInstance =>
    * Close hook which can be overridden by the inheriting classes, publicly exposes to be run by other classes or
    * objects. By default this will simply stop the current `SparkContext`.
    */
-  def close(): Try[Unit] = Try {
-    //sparkContext.stop()
-  }
+  def close(): Try[Unit] = Try { sparkContext.stop() }
 
 }
