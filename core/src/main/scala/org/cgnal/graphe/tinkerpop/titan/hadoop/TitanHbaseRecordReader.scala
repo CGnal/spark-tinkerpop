@@ -1,6 +1,9 @@
 package org.cgnal.graphe.tinkerpop.titan.hadoop
 
+import scala.annotation.tailrec
 import scala.collection.convert.decorateAsScala._
+
+import org.slf4j.LoggerFactory
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.io.NullWritable
@@ -17,10 +20,12 @@ import com.thinkaurelius.titan.graphdb.tinkerpop.optimize.AdjacentVertexFilterOp
 
 import org.cgnal.graphe.tinkerpop.graph.query.{ TinkerpopQueryParsing, TraversalOptimizations }
 
-class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Configuration)
+final class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Configuration)
   extends RecordReader[NullWritable, VertexWritable]
   with TinkerpopQueryParsing
   with TraversalOptimizations {
+
+  private val log = LoggerFactory.getLogger("cgnal.TitanHbaseRecordReader")
 
   override protected def newStrategies = Seq(
     AdjacentVertexFilterOptimizerStrategy.instance()
@@ -41,21 +46,19 @@ class TitanHbaseRecordReader(hbaseReader: HBaseBinaryRecordReader, config: Confi
 
   private def evalQuery(vertex: TinkerVertex) = if (usesScript) evalTraversal(vertex, tinkerpopQuery).result else Some(vertex)
 
-  private def setCurrentValue(vertex: TinkerVertex) = {
-    vertexWritable = new VertexWritable(vertex)
-    true
-  }
+  private def setCurrentValue(vertex: TinkerVertex) = vertexWritable = new VertexWritable(vertex)
 
   private def readKeyValue() = vertexReader.readVertex(hbaseReader.getCurrentKey, hbaseReader.getCurrentValue.asScala).flatMap { evalQuery } match {
-    case Some(tinkerVertex) => setCurrentValue(tinkerVertex)
-    case None               => nextKeyValue()
+    case Some(tinkerVertex) => setCurrentValue(tinkerVertex); true
+    case None               => false
   }
 
   def initialize(split: InputSplit, context: TaskAttemptContext) = hbaseReader.initialize(split, context)
 
   def getProgress = hbaseReader.getProgress
 
-  def nextKeyValue(): Boolean = if (hbaseReader.nextKeyValue()) readKeyValue() else false
+  @tailrec
+  def nextKeyValue(): Boolean = if (hbaseReader.nextKeyValue()) { readKeyValue() || nextKeyValue() } else false
 
   def getCurrentValue = vertexWritable
 

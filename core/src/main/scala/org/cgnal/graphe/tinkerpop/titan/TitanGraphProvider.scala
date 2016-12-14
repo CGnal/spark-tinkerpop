@@ -1,7 +1,5 @@
 package org.cgnal.graphe.tinkerpop.titan
 
-import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph
-
 import scala.util.{ Try, Success, Failure }
 
 import org.slf4j.LoggerFactory
@@ -11,7 +9,7 @@ import org.apache.spark.rdd.RDD
 import com.thinkaurelius.titan.core.TitanFactory
 import com.thinkaurelius.titan.core.schema.TitanManagement
 import com.thinkaurelius.titan.core.util.TitanCleanup
-import com.thinkaurelius.titan.diskstorage.configuration.ConfigElement
+import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph
 import com.thinkaurelius.titan.graphdb.configuration.GraphDatabaseConfiguration
 import com.thinkaurelius.titan.graphdb.idmanagement.IDManager
 import com.thinkaurelius.titan.util.stats.{ NumberUtil => TitanNumberUtil }
@@ -28,7 +26,7 @@ import org.cgnal.graphe.tinkerpop.titan.hadoop.TitanHbaseInputFormat
  */
 object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceConfig with HadoopGraphLoader with Serializable {
 
-  @transient lazy val log = LoggerFactory.getLogger("cgnal.titan.Provider")
+  @transient lazy val log = LoggerFactory.getLogger("cgnal.provider.Titan")
 
   @transient protected lazy val graph = TitanFactory.open(config).asInstanceOf[StandardTitanGraph]
 
@@ -77,7 +75,7 @@ object TitanGraphProvider extends NativeTinkerGraphProvider with TitanResourceCo
   }
 
   /**
-   * Opens a `Management` instance and applies `f`, committing the transaction and the end in case of success, and
+   * Opens a `Management` instance and applies `f`, committing the transaction at the end in case of success, and
    * rolling back in case of failure.
    * @param f the function to applu on the fresh `Management` instance
    */

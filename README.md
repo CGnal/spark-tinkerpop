@@ -213,10 +213,10 @@ The integration occurs in a two-step conversion process that leverages the Tinke
 Vertex-Query
 -------
 
-When loading data with native interfaces which use custom hadoop `InputFormat` and `RecordReader`, a query can be passed through configuration that filters loaded vertices, or their edges. Currently only the Titan graph implementation supports this, which uses a gremlin-groovy script engine to parse and compile the `ioformat.vertex-query` configuration string setting.
+When loading data with native interfaces which use custom hadoop `InputFormat` and `RecordReader`, a query can be passed through configuration that filters loaded vertices, or their edges. Currently only the Titan graph implementation supports this, which uses a gremlin-groovy script engine to parse and compile the `ioformat.validation-query` configuration string setting.
 
 The value can be any query that returns a `GraphTraversal[Vertex, Vertex]` or `GraphTraversal[Edge, Edge]`, which would use the `v` or `e` bindings; more concretely: `v.has("productId")` would read only vertices that have the `productId` property set, filtering out those that don't.
 
 On the other hand, a query like `e.has("crossSellId")` would all vertices, filtering out all the edges that don't match the query.
 
-Note that the traversal which results from the parsing and compilation is evaluated against each vertex that is read by the record reader, but the script compilation is performed (lazily) *only once*. Also, the query is only compiled and evaluated if and only if the configuration setting is defined and is not empty or null.
+Note that the traversal which results from the parsing and compilation is evaluated against each vertex that is read by the record reader, but the script compilation is performed (lazily) *only once*. Also, the query is only compiled and evaluated if and only if the configuration setting is defined and is not empty or `null`.

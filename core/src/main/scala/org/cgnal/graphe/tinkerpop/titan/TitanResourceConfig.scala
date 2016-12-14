@@ -36,7 +36,6 @@ trait TitanResourceConfig extends ResourceConfig { this: TinkerGraphProvider =>
    *   Seq { GraphDatabaseConfiguration.STORAGE_NS -> TitanHadoopConfiguration.GRAPH_CONFIG_KEYS -> false }
    * }}}
    * which copies all `storage` elements in configuration onto the `titanmr.io.conf` namespace.
-   * @return
    */
   protected def namespaceMappings = Seq(
     GraphDatabaseConfiguration.STORAGE_NS -> TitanHadoopConfiguration.GRAPH_CONFIG_KEYS -> false

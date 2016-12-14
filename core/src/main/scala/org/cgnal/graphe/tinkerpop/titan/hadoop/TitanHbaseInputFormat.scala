@@ -56,7 +56,6 @@ class TitanHbaseInputFormat extends NativeGraphInputFormat with Configurable {
   private def withUpdatedConf[A](newConf: Configuration)(f: Configuration => A) = {
     setConf(newConf)
     f { getConf }
-
   }
 
   private def createHbaseRecordReader(inputSplit: InputSplit, taskContext: TaskAttemptContext) = withUpdatedConf(taskContext.getConfiguration) { _ =>

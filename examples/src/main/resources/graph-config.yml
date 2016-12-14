@@ -27,3 +27,4 @@ storage:
   port: 2181
 ioformat:
     filter-partitioned-vertices: true
+    validation-query: v.has("productId", P.outside(2, 3))

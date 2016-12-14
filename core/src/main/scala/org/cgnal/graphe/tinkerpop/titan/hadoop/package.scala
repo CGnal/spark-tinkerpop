@@ -23,10 +23,10 @@ package object hadoop {
   val titanBulkPartitioningKey   = ConfigElement.getPath(TitanHadoopConfiguration.FILTER_PARTITIONED_VERTICES)
   val titanBulkPartitioningValue = true
 
-  // key   = titanmr.ioformat.vertex-query
-  // value = v.query()
-  val titanVertexQueryKey   = ConfigElement.getPath(TitanCGnalConfig.VERTEX_QUERY)
-  val titanVertexQueryValue = TitanCGnalConfig.VERTEX_QUERY.getDefaultValue
+  // key   = titanmr.ioformat.validation-query
+  // value = none
+  val titanVertexQueryKey   = ConfigElement.getPath(TitanCGnalConfig.VALIDATION_QUERY)
+  val titanVertexQueryValue = TitanCGnalConfig.VALIDATION_QUERY.getDefaultValue
 
   // key   = storage.hbase.short-cf-names
   // value = true

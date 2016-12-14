@@ -9,6 +9,8 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.SparkContext
 import org.apache.spark.graphx._
 
+import org.apache.tinkerpop.gremlin.process.traversal.P
+
 import com.thinkaurelius.titan.core.Multiplicity.MULTI
 import com.thinkaurelius.titan.core.Cardinality.{ SINGLE, SET }
 
@@ -83,7 +85,7 @@ sealed class TitanApplication(protected val sparkContext: SparkContext,
   private def save() = for {
     data     <- timed("Loading data")        { loadData()          }
     vertices <- timed("Generating Vertices") { loadVertices(data)  }
-    edges    <- timed("Generting Edges")     { loadEdges(data)     }
+    edges    <- timed("Generating Edges")    { loadEdges(data)     }
     _        <- timed("Showing Vertices")    { show(vertices)      }
     _        <- timed("Showing Edges")       { show(edges)         }
     graph    <- graphX(vertices, edges)

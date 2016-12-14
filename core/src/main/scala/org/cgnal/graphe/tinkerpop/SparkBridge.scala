@@ -49,6 +49,10 @@ object SparkBridge {
    * @tparam B the edge type
    */
   def asGraphX[A, B](rdd: RDD[TinkerVertex])(implicit A: ClassTag[A], B: ClassTag[B], arrowV: Arrows.TinkerVertexArrowR[A], arrowE: Arrows.TinkerEdgeArrowR[B]) =
-    SparkGraph[A, B](asSparkVertices(rdd), asSparkEdges(rdd))
+    SparkGraph[A, B](asSparkVertices(rdd), asSparkEdges(rdd)).filter[A, B](
+      preprocess = identity,
+      epred = _ => true,
+      vpred = (_, v) => v != null
+    )
 
 }

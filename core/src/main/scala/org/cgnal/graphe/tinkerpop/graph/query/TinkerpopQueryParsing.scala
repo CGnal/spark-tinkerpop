@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
 import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversal
 import org.apache.tinkerpop.gremlin.process.traversal.util.DefaultTraversalStrategies
 import org.apache.tinkerpop.gremlin.process.traversal.{ TraversalStrategy, TraversalStrategies }
-import org.apache.tinkerpop.gremlin.structure.{ Edge, Vertex, Graph }
+import org.apache.tinkerpop.gremlin.structure.{ Edge, Vertex, Graph, Direction }
 import org.apache.tinkerpop.gremlin.structure.util.star.StarGraph
 
 import org.cgnal.graphe.tinkerpop.{ EnrichedGraphTraversal, EnrichedTinkerVertex }
