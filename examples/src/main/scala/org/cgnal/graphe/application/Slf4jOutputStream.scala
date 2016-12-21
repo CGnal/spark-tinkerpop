@@ -47,14 +47,14 @@ final class Slf4jOutputStream(log: Logger, level: LogLevel) extends OutputStream
 
 object Slf4jOutputStream {
 
-  def error(log: Logger) = new Slf4jOutputStream(log, Info)
+  def error(log: Logger) = new Slf4jOutputStream(log, Error)
 
-  def warn(log: Logger) = new Slf4jOutputStream(log, Info)
+  def warn(log: Logger) = new Slf4jOutputStream(log, Warn)
 
   def info(log: Logger) = new Slf4jOutputStream(log, Info)
 
-  def debug(log: Logger) = new Slf4jOutputStream(log, Info)
+  def debug(log: Logger) = new Slf4jOutputStream(log, Debug)
 
-  def trace(log: Logger) = new Slf4jOutputStream(log, Info)
+  def trace(log: Logger) = new Slf4jOutputStream(log, Trace)
 
 }
