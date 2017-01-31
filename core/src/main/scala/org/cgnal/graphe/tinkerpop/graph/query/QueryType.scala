@@ -27,6 +27,13 @@ case object EdgeQueryType extends QueryType {
 }
 
 /**
+ * Indicates that the query will operate on no specific type of return value, which makes refinement less automatic.
+ */
+case object GenericQueryType extends QueryType {
+  def binding = "g"
+}
+
+/**
  * Construction helper object, used to create a `QueryType` instance from other more primitive types, such as `String`.
  */
 object QueryTypes {
@@ -36,6 +43,7 @@ object QueryTypes {
   def fromScript(script: String) =
     if      (script startsWith "v.") VertexQueryType
     else if (script startsWith "e.") EdgeQueryType
+    else if (script startsWith "g.") GenericQueryType
     else    throw new IllegalArgumentException(s"Invalid script: [${trim(script)}]: must start with [v] for vertices and [e] for edges")
 
 }

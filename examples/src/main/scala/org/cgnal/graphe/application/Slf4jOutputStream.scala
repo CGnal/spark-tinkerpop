@@ -49,9 +49,9 @@ object Slf4jOutputStream {
 
   def error(log: Logger) = new Slf4jOutputStream(log, Error)
 
-  def warn(log: Logger) = new Slf4jOutputStream(log, Warn)
+  def warn(log: Logger)  = new Slf4jOutputStream(log, Warn)
 
-  def info(log: Logger) = new Slf4jOutputStream(log, Info)
+  def info(log: Logger)  = new Slf4jOutputStream(log, Info)
 
   def debug(log: Logger) = new Slf4jOutputStream(log, Debug)
 
