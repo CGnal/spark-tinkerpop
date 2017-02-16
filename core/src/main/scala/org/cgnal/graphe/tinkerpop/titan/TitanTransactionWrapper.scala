@@ -2,6 +2,8 @@ package org.cgnal.graphe.tinkerpop.titan
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.thinkaurelius.titan.graphdb.database.StandardTitanGraph
+
 import scala.annotation.tailrec
 import scala.concurrent.duration._
 import scala.util.Try
@@ -42,15 +44,25 @@ final class TitanTransactionWrapper[A <: TitanTransaction](@transient private[ti
 
 object TitanTransactionWrapper {
 
-  def create(graph: TitanGraph) = new TitanTransactionWrapper(graph.newTransaction())
+  def create(graph: TitanGraph, batchMode: Boolean = false) = if (batchMode) batch(graph) else standard(graph)
 
   def standard(graph: TitanGraph) = new TitanTransactionWrapper(graph.newTransaction().asInstanceOf[StandardTitanTx])
 
+  def batch(graph: TitanGraph) = new TitanTransactionWrapper(
+    graph.asInstanceOf[StandardTitanGraph].buildTransaction()
+      .threadBound()
+      .consistencyChecks(false)
+      .checkInternalVertexExistence(false)
+      .checkExternalVertexExistence(false)
+      .start()
+      .asInstanceOf[StandardTitanTx]
+  )
+
   def withIdManager[U](transaction: StandardTitanTx)(f: IDManager => U) = Try { f(transaction.getIdInspector) }
 
-  def batched[A](graph: TitanGraph, iterator: Iterator[A], batchSize: Int, retryThreshold: Int, retryDelay: FiniteDuration)(f: (Seq[A], StandardTitanTx) => Try[Unit]) = Try {
+  def batched[A](graph: TitanGraph, iterator: Iterator[A], batchSize: Int, retryThreshold: Int, retryDelay: FiniteDuration, batchMode: Boolean = false)(f: (Seq[A], StandardTitanTx) => Try[Unit]) = Try {
     iterator.grouped(batchSize).foreach { batch =>
-      standard(graph).attemptTitanTransaction(retryThreshold, retryDelay) { f(batch, _) }.get
+      create(graph, batchMode).attemptTitanTransaction(retryThreshold, retryDelay) { f(batch, _) }.get
     }
   }
 
