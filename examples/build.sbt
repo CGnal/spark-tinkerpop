@@ -7,7 +7,7 @@ import sbtassembly.MergeStrategy
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import com.typesafe.sbt.packager.universal.UniversalPlugin
 
-val applicationVersion = "1.0-SNAPSHOT"
+val applicationVersion = "1.0-hdp2.6"
 val debugPort = 5050
 
 organization := "org.cgnal"
@@ -16,7 +16,7 @@ name := "spark-tinkerpop-examples"
 
 version := applicationVersion
 
-scalaVersion := "2.10.5"
+scalaVersion := "2.11.11"
 
 javacOptions in ThisBuild ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint")
 
@@ -101,23 +101,25 @@ def universalMappings(mappings: Seq[(File, String)])(orgExclude: String, nameExc
 def debugOptions = if (isDebug) Seq { s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=$debugPort" } else Seq.empty[String]
 
 // Versions
-def coreVersion       = "1.0-SNAPSHOT"
+def coreVersion       = "1.0-hdp2.6"
 def scallopVersion    = "2.0.1"
 def scalazVersion     = "7.1.1"
-def sparkVersion      = "1.6.0-cdh5.7.0"
-def hadoopVersion     = "2.6.0-cdh5.7.0"
-def hbaseVersion      = "1.2.0-cdh5.7.0"
-def titanVersion      = "1.1.0-cdh5.7.0"
+def sparkVersion      = "2.1.0.2.6.0.3-8"
+def hadoopVersion     = "2.7.3.2.6.0.3-8"
+def hbaseVersion      = "1.1.2.2.6.0.3-8"
+def titanVersion      = "1.1.0-hdp2.6.0"
 def gremlinVersion    = "3.1.0-incubating"
 def jUnitVersion      = "4.8.1"
-def scalaTestVersion  = "2.0"
+def scalaTestVersion  = "3.0.0"
 def scalaCheckVersion = "1.12.4"
 
 lazy val examples = project in here enablePlugins JavaAppPackaging enablePlugins UniversalPlugin
 
 lazy val projectAssembly = { project in assemblyDir }.settings(ivyOverride, assemblyJar, assemblyResolutionStrategy, assemblyNoCache) dependsOn examples
 
-resolvers in ThisBuild += "cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/"
+resolvers in ThisBuild += "hortonworks" at "http://repo.hortonworks.com/content/repositories/releases/"
+
+resolvers in ThisBuild += "hortonworks_groups" at "http://repo.hortonworks.com/content/groups/public/"
 
 resolvers in ThisBuild += "maven-central" at "http://central.maven.org/maven2/"
 
@@ -129,13 +131,9 @@ libraryDependencies += sparkExcludes { "org.apache.spark" %% "spark-sql"    % sp
 
 libraryDependencies += sparkExcludes { "org.apache.spark" %% "spark-graphx" % sparkVersion % mainScope }
 
-libraryDependencies += hadoopClientExcludes { "org.apache.hadoop"    % "hadoop-client"  % hadoopVersion  % mainScope withSources() }
+libraryDependencies += hadoopClientExcludes { "org.apache.hadoop"    % "hadoop-client"  % hadoopVersion  % mainScope  }
 
-libraryDependencies += tinkerpopExcludes    { "org.apache.tinkerpop" % "hadoop-gremlin" % gremlinVersion % mainScope withSources() }
-
-libraryDependencies += tinkerpopExcludes    { "org.apache.tinkerpop" % "spark-gremlin"  % gremlinVersion % mainScope withSources() }
-
-libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-common"   % hbaseVersion   % mainScope withSources() }
+libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-common"   % hbaseVersion   % mainScope  }
 
 libraryDependencies += hbaseExcludes        { "org.apache.hbase"     % "hbase-server"   % hbaseVersion   % mainScope withSources() }
 

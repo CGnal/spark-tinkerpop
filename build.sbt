@@ -1,7 +1,7 @@
 import sbt.Keys._
 import sbt._
 
-scalaVersion := "2.10.5"
+scalaVersion := "2.11.11"
 
 def here = file(".")
 
