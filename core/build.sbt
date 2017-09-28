@@ -116,3 +116,15 @@ autoAPIMappings := true
 testOptions in Test += Tests.Filter { _ endsWith "Test" }
 
 unmanagedBase := baseDirectory.value / "libext"
+
+
+isSnapshot := version.value.endsWith("SNAPSHOT")
+
+publishTo := {
+  val nexus = "http://repo.eligotech.com/nexus/"
+  if (isSnapshot.value)
+    Some("snapshots" at nexus + "content/repositories/snapshots")
+  else
+    Some("releases" at nexus + "content/repositories/releases")
+}
+

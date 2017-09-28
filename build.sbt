@@ -16,3 +16,4 @@ lazy val examples = Project(id = "examples", base = file("examples")).settings(
   javaOptions in console += hadoopHome,
   aggregate in update    := false
 ) dependsOn core
+
