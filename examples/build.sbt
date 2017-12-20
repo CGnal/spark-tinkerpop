@@ -7,7 +7,7 @@ import sbtassembly.MergeStrategy
 import com.typesafe.sbt.packager.archetypes.JavaAppPackaging
 import com.typesafe.sbt.packager.universal.UniversalPlugin
 
-val applicationVersion = "1.0-hdp2.6"
+val applicationVersion = "1.0.0-hdp2.6.2"
 val debugPort = 5050
 
 organization := "org.cgnal"
@@ -101,13 +101,14 @@ def universalMappings(mappings: Seq[(File, String)])(orgExclude: String, nameExc
 def debugOptions = if (isDebug) Seq { s"-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=$debugPort" } else Seq.empty[String]
 
 // Versions
-def coreVersion       = "1.0-hdp2.6"
+def coreVersion       = "1.0.0-hdp2.6.2"
 def scallopVersion    = "2.0.1"
 def scalazVersion     = "7.1.1"
-def sparkVersion      = "2.1.0.2.6.0.3-8"
-def hadoopVersion     = "2.7.3.2.6.0.3-8"
-def hbaseVersion      = "1.1.2.2.6.0.3-8"
-def titanVersion      = "1.1.0-hdp2.6.0"
+def hdpRelease        = "2.6.2.0-205"
+def sparkVersion      = s"2.1.1.$hdpRelease"
+def hadoopVersion     = s"2.7.3.$hdpRelease"
+def hbaseVersion      = s"1.1.2.$hdpRelease"
+def titanVersion      = "1.1.0-hdp2.6.2"
 def gremlinVersion    = "3.1.0-incubating"
 def jUnitVersion      = "4.8.1"
 def scalaTestVersion  = "3.0.0"

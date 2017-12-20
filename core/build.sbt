@@ -2,7 +2,7 @@ import scala.util.Properties
 
 import sbt._
 
-val applicationVersion = "1.0-hdp2.6"
+val applicationVersion = "1.0.0-hdp2.6.2"
 
 organization := "org.cgnal"
 
@@ -62,10 +62,11 @@ def ivyOverride  = ivyScala := ivyScala.value.map { _.copy(overrideScalaVersion 
 def mainScope = if (isLibrary) "provided" else "compile"
 
 def scalazVersion     = "7.1.1"
-def sparkVersion      = "2.1.0.2.6.0.3-8"
-def hadoopVersion     = "2.7.3.2.6.0.3-8"
-def hbaseVersion      = "1.1.2.2.6.0.3-8"
-def titanVersion      = "1.1.0-hdp2.6.0"
+def hdpRelease        = "2.6.2.0-205"
+def sparkVersion      = s"2.1.1.$hdpRelease"
+def hadoopVersion     = s"2.7.3.$hdpRelease"
+def hbaseVersion      = s"1.1.2.$hdpRelease"
+def titanVersion      = "1.1.0-hdp2.6.2"
 def gremlinVersion    = "3.1.0-incubating"
 def jUnitVersion      = "4.8.1"
 def scalaTestVersion  = "3.0.0"
